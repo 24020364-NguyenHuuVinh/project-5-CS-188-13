@@ -31,6 +31,26 @@ def train_perceptron(model, dataset):
     with no_grad():
         dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
         "*** YOUR CODE HERE ***"
+        while True:
+            convergence = True
+            for batch in dataloader:
+                # Lấy features và label từ từ điển batch theo yêu cầu của hệ thống
+                x = batch['x']
+                label = batch['label']
+                
+                # Lấy dự đoán từ model (trả về 1 hoặc -1)
+                prediction = model.get_prediction(x)
+                
+                # Lấy nhãn chuẩn xác
+                true_label = label.item()
+
+                # Nếu dự đoán sai, cập nhật trọng số và đánh dấu chưa hội tụ
+                if prediction != true_label:
+                    model.w += true_label * x
+                    convergence = False
+            # Nếu tất cả các dự đoán đều đúng, thoát vòng lặp
+            if convergence:
+                break
 
 
 def train_regression(model, dataset):

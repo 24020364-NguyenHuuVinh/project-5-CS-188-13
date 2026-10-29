@@ -42,6 +42,9 @@ class PerceptronModel(Module):
         super(PerceptronModel, self).__init__()
 
         "*** YOUR CODE HERE ***"
+        # Khởi tạo trọng số w với kích thước (1, dimensions) và tất cả các giá trị bằng 1.
+        self.w = Parameter(ones(1, dimensions))
+
 
 
     def get_weights(self):
@@ -61,8 +64,8 @@ class PerceptronModel(Module):
         The pytorch function `tensordot` may be helpful here.
         """
         "*** YOUR CODE HERE ***"
-
-        
+        # Tính tích vô hướng 
+        return tensordot(x, self.w, dims=([1], [1]))
 
     def get_prediction(self, x):
         """
@@ -73,6 +76,13 @@ class PerceptronModel(Module):
         score = self(x)
 
         "*** YOUR CODE HERE ***"
+        # self(x) sẽ gọi phương thức forward để tính score, sau đó dùng .item() để lấy giá trị số thực từ tensor.
+        score = self(x).item()
+        if score >= 0:
+            return 1
+        else:
+            return -1
+        
 
 
 
