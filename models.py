@@ -97,6 +97,10 @@ class RegressionModel(Module):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
         super().__init__()
+        # Khởi tạo các lớp tuyến tính với kích thước đầu vào và đầu ra phù hợp
+        self.layer1 = Linear(1, 64)
+        self.layer2 = Linear(64, 64)
+        self.layer3 = Linear(64, 1)
    
 
     def forward(self, x):
@@ -109,7 +113,17 @@ class RegressionModel(Module):
             A node with shape (batch_size x 1) containing predicted y-values
         """
         "*** YOUR CODE HERE ***"
-
+        # Dữ liệu đi qua lớp 1 và bị bẻ cong bởi relu
+        out = self.layer1(x)
+        out = relu(out)
+        
+        # Dữ liệu đi qua lớp 2 và tiếp tục bị bẻ cong
+        out = self.layer2(out)
+        out = relu(out)
+        
+        # Lớp 3 xuất ra kết quả cuối cùng (giữ nguyên tính tuyến tính để ra số âm/dương)
+        return self.layer3(out)
+    
 
 class DigitClassificationModel(Module):
     """

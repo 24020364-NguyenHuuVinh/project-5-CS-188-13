@@ -69,6 +69,30 @@ def train_regression(model, dataset):
         
     """
     "*** YOUR CODE HERE ***"
+    # Khởi tạo bộ tối ưu hóa Adam để tự động cập nhật trọng số (learning rate = 0.01 là tối ưu)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    # Tạo đối tượng DataLoader, chia dữ liệu thành các cụm 200 điểm ảnh
+    dataloader = DataLoader(dataset, batch_size=len(dataset), shuffle=True)
+
+    # Vòng lặp huấn luyện liên tục cho đến khi sai số đủ nhỏ
+    for _ in range(10000):
+        for batch in dataloader:
+            # Lấy features (x) và label từ dictionary theo đúng yêu cầu đề bài
+            x = batch['x']
+            label = batch['label']
+
+            # 5 bước huấn luyện tiêu chuẩn
+            optimizer.zero_grad()                     # Xóa gradient cũ để tránh cộng dồn
+            prediction = model(x)                     # Lấy dự đoán từ model (dạng tensor)
+            loss = regression_loss(prediction, label) # Tính sai số
+            loss.backward()                           # Tính gradient dựa trên sai số
+            optimizer.step()                          # Cập nhật trọng số dựa trên gradient và learning rate
+            
+            with no_grad():
+                updated_loss = regression_loss(model(x), label)
+        # Kiểm tra điều kiện dừng: nếu sai số nhỏ hơn 0.02, thoát vòng lặp
+        if updated_loss.item() <= 0.02:
+            break
 
 
 def train_digitclassifier(model, dataset):
