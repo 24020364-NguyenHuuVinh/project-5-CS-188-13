@@ -71,11 +71,11 @@ def train_regression(model, dataset):
     "*** YOUR CODE HERE ***"
     # Khởi tạo bộ tối ưu hóa Adam để tự động cập nhật trọng số (learning rate = 0.01 là tối ưu)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
-    # Tạo đối tượng DataLoader, chia dữ liệu thành các cụm 200 điểm ảnh
-    dataloader = DataLoader(dataset, batch_size=len(dataset), shuffle=True)
+    # Tạo đối tượng DataLoader để chia dữ liệu thành các batch
+    dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
 
-    # Vòng lặp huấn luyện liên tục cho đến khi sai số đủ nhỏ
-    for _ in range(10000):
+    # Vòng lặp huấn luyện, tối đa 10000 lần lặp
+    for epoch in range(10000):
         for batch in dataloader:
             # Lấy features (x) và label từ dictionary theo đúng yêu cầu đề bài
             x = batch['x']
@@ -87,9 +87,9 @@ def train_regression(model, dataset):
             loss = regression_loss(prediction, label) # Tính sai số
             loss.backward()                           # Tính gradient dựa trên sai số
             optimizer.step()                          # Cập nhật trọng số dựa trên gradient và learning rate
-            
+
             with no_grad():
-                updated_loss = regression_loss(model(x), label)
+                updated_loss = regression_loss(model(x), label) # Tính lại sai số sau khi cập nhật trọng số
         # Kiểm tra điều kiện dừng: nếu sai số nhỏ hơn 0.02, thoát vòng lặp
         if updated_loss.item() <= 0.02:
             break
@@ -101,7 +101,29 @@ def train_digitclassifier(model, dataset):
     """
     model.train()
     """ YOUR CODE HERE """
+    dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
+    # Vòng lặp huấn luyện, tối đa 1000 lần lặp
+    for epoch in range(1000):
+        for batch in dataloader:
+            x = batch['x']
+            label = batch['label']
+
+            # Chu trình 5 bước tối ưu hóa cơ bản
+            optimizer.zero_grad()
+            prediction = model(x)
+            loss = digitclassifier_loss(prediction, label)
+            loss.backward()
+            optimizer.step()
+
+        # Đánh giá độ chính xác sau mỗi epoch trên tập Validation
+        with no_grad():
+            val_accuracy = dataset.get_validation_accuracy()
+
+        # Test Accuracy >= 97% để dừng huấn luyện
+        if val_accuracy >= 0.97:
+            break
 
 def train_languageid(model, dataset):
     """

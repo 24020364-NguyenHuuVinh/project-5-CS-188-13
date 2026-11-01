@@ -146,6 +146,10 @@ class DigitClassificationModel(Module):
         input_size = 28 * 28
         output_size = 10
         "*** YOUR CODE HERE ***"
+        # Khởi tạo các lớp tuyến tính với kích thước đầu vào và đầu ra phù hợp
+        self.layer1 = Linear(input_size, 256)
+        self.layer2 = Linear(256, 128)
+        self.layer3 = Linear(128, output_size)
 
 
     def forward(self, x):
@@ -163,7 +167,16 @@ class DigitClassificationModel(Module):
                 (also called logits)
         """
         """ YOUR CODE HERE """
-
+        # Tầng ẩn 1 + biến đổi phi tuyến
+        out = self.layer1(x)
+        out = relu(out)
+        
+        # Tầng ẩn 2 + biến đổi phi tuyến
+        out = self.layer2(out)
+        out = relu(out)
+        
+        # Tầng đầu ra 
+        return self.layer3(out)
 
 
 class LanguageIDModel(Module):
