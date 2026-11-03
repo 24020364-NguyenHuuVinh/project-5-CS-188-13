@@ -245,7 +245,17 @@ def Convolve(input: tensor, weight: tensor):
     weight_dimensions = weight.shape
     Output_Tensor = tensor(())
     "*** YOUR CODE HERE ***"
+    # Tính kích thước ma trận output: H_out = H - kh + 1, W_out = W - kw + 1
+    H, W = input_tensor_dimensions
+    kh, kw = weight_dimensions
+    out_h, out_w = H - kh + 1, W - kw + 1
+    Output_Tensor = zeros((out_h, out_w))
 
+    # Trượt kernel qua từng vùng ảnh và tính tích vô hướng
+    for i in range(out_h):
+        for j in range(out_w):
+            patch = input[i : i + kh, j : j + kw]
+            Output_Tensor[i, j] = tensordot(patch, weight, dims=([0, 1], [0, 1]))
     "*** End Code ***"
     return Output_Tensor
 
