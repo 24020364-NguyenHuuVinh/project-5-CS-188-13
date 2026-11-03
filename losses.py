@@ -63,7 +63,6 @@ def digitconvolution_Loss(y_pred, y):
         y: a node with shape (batch_size x 10)
     Returns: a loss tensor
     """
-    """ YOUR CODE HERE """
+    "*** YOUR CODE HERE ***"
+    # Tính cross entropy loss giữa logits dự đoán và nhãn one-hot
     return cross_entropy(y_pred, y)
-
-    
