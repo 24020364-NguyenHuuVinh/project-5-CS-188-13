@@ -161,4 +161,19 @@ def Train_DigitConvolution(model, dataset):
     """
     Trains the model.
     """
-    """ YOUR CODE HERE """
+    "*** YOUR CODE HERE ***"
+    # Dataloader chia batch 20 và khởi tạo bộ tối ưu Adam
+    loader = DataLoader(dataset, batch_size=20, shuffle=True)
+    opt = optim.Adam(model.parameters(), lr=0.003)
+
+    for epoch in range(6):
+        for b in loader:
+            opt.zero_grad()
+            # Lấy x, label từ batch và tính loss
+            x = b['x']
+            y = b['label']
+            loss = digitconvolution_Loss(model(x), y)
+            
+            # Lan truyền ngược và cập nhật tham số
+            loss.backward()
+            opt.step()
