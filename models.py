@@ -278,7 +278,10 @@ class DigitConvolutionalModel(Module):
         output_size = 10
 
         self.convolution_weights = Parameter(ones((3, 3)))
-        """ YOUR CODE HERE """
+        "*** YOUR CODE HERE ***"
+        # Ảnh 28x28 qua kernel 3x3 thành 26x26 = 676 chiều sau khi flatten
+        self.fc1 = Linear(676, 64)
+        self.fc2 = Linear(64, output_size)
 
 
     def forward(self, x):
@@ -291,7 +294,10 @@ class DigitConvolutionalModel(Module):
             list(map(lambda sample: Convolve(sample, self.convolution_weights), x))
         )
         x = x.flatten(start_dim=1)
-        """ YOUR CODE HERE """
+        "*** YOUR CODE HERE ***"
+        # Đưa qua tầng ẩn với ReLU và xuất ra 10 logits
+        h = relu(self.fc1(x))
+        return self.fc2(h)
 
 
 class Attention(Module):
