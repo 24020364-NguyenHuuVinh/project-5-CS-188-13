@@ -125,22 +125,35 @@ def train_digitclassifier(model, dataset):
         if val_accuracy >= 0.97:
             break
 
+
 def train_languageid(model, dataset):
-    """
-    Trains the model.
-
-    Note that when you iterate through dataloader, each batch will returned as its own vector in the form
-    (batch_size x length of word x self.num_chars). However, in order to run multiple samples at the same time,
-    get_loss() and run() expect each batch to be in the form (length of word x batch_size x self.num_chars), meaning
-    that you need to switch the first two dimensions of every batch. This can be done with the movedim() function 
-    as follows:
-
-    movedim(input_vector, initial_dimension_position, final_dimension_position)
-
-    For more information, look at the pytorch documentation of torch.movedim()
-    """
     model.train()
-    "*** YOUR CODE HERE ***"
+
+    dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+    for epoch in range(100):
+        for batch in dataloader:
+            # Chuyển dữ liệu từ (batch_size, length, num_chars)
+            # thành (length, batch_size, num_chars)
+            x = movedim(batch['x'], 1, 0)
+            label = batch['label']
+
+            # Huấn luyện
+            optimizer.zero_grad()
+            prediction = model(x)
+            loss = languageid_loss(prediction, label)
+            loss.backward()
+            optimizer.step()
+
+        # Kiểm tra độ chính xác trên tập validation
+        with no_grad():
+            val_accuracy = dataset.get_validation_accuracy()
+
+        # Dừng nếu đạt độ chính xác validation 85%
+        if val_accuracy >= 0.85:
+            break
+
 
 
 

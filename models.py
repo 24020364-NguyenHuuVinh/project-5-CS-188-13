@@ -189,48 +189,39 @@ class LanguageIDModel(Module):
     """
 
     def __init__(self):
-        # Our dataset contains words from five different languages, and the
-        # combined alphabets of the five languages contain a total of 47 unique
-        # characters.
-        # You can refer to self.num_chars or len(self.languages) in your code
+        super(LanguageIDModel, self).__init__()
+
         self.num_chars = 47
         self.languages = ["English", "Spanish", "Finnish", "Dutch", "Polish"]
-        super(LanguageIDModel, self).__init__()
-        "*** YOUR CODE HERE ***"
-        # Initialize your model parameters here
 
+        hidden_size = 128
 
+        self.init_hidden = Linear(self.num_chars, hidden_size)
+        self.char_to_hidden = Linear(self.num_chars, hidden_size)
+        self.hidden_to_hidden = Linear(hidden_size, hidden_size, bias=False)
+
+        self.output = Linear(hidden_size, len(self.languages))
+
+    
 
     def forward(self, xs):
         """
-        Runs the model for a batch of examples.
+        xs: list of tensors, each tensor has shape
+            (batch_size, num_chars)
 
-        Although words have different lengths, our data processing guarantees
-        that within a single batch, all words will be of the same length (L).
-
-        Here `xs` will be a list of length L. Each element of `xs` will be a
-        tensor with shape (batch_size x self.num_chars), where every row in the
-        array is a one-hot vector encoding of a character. For example, if we
-        have a batch of 8 three-letter words where the last word is "cat", then
-        xs[1] will be a tensor that contains a 1 at position (7, 0). Here the
-        index 7 reflects the fact that "cat" is the last word in the batch, and
-        the index 0 reflects the fact that the letter "a" is the inital (0th)
-        letter of our combined alphabet for this task.
-
-        Your model should use a Recurrent Neural Network to summarize the list
-        `xs` into a single tensor of shape (batch_size x hidden_size), for your
-        choice of hidden_size. It should then calculate a tensor of shape
-        (batch_size x 5) containing scores, where higher scores correspond to
-        greater probability of the word originating from a particular language.
-
-        Inputs:
-            xs: a list with L elements (one per character), where each element
-                is a node with shape (batch_size x self.num_chars)
         Returns:
-            A node with shape (batch_size x 5) containing predicted scores
-                (also called logits)
+            Tensor of shape (batch_size, num_languages)
         """
-        "*** YOUR CODE HERE ***"
+
+        h = relu(self.init_hidden(xs[0]))
+
+        for x in xs[1:]:
+            h = relu(self.char_to_hidden(x) + self.hidden_to_hidden(h))
+
+        return self.output(h)
+
+
+    
 
 
 
