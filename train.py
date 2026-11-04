@@ -132,7 +132,7 @@ def train_languageid(model, dataset):
     dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-    for epoch in range(1):
+    for epoch in range(30):
         for batch in dataloader:
             # Chuyển dữ liệu từ (batch_size, length, num_chars)
             # thành (length, batch_size, num_chars)
