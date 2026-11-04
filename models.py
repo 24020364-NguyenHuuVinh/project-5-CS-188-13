@@ -254,7 +254,7 @@ def Convolve(input: tensor, weight: tensor):
     # Tối ưu: lặp qua kernel (kh x kw = 9 lần) thay vì lặp qua từng ô ảnh (676 lần)
     for u in range(kh):
         for v in range(kw):
-            Output_Tensor = Output_Tensor + input[u : u + out_h, v : v + out_w] * weight[u, v]
+            Output_Tensor += input[u : u + out_h, v : v + out_w] * weight[u, v]
     "*** End Code ***"
     return Output_Tensor
 
@@ -295,8 +295,7 @@ class DigitConvolutionalModel(Module):
         x = x.flatten(start_dim=1)
         "*** YOUR CODE HERE ***"
         # Đưa qua tầng ẩn với ReLU và xuất ra 10 logits
-        h = relu(self.fc1(x))
-        return self.fc2(h)
+        return self.fc2(relu(self.fc1(x)))
 
 
 class Attention(Module):
