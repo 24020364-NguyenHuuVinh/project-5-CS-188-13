@@ -336,5 +336,25 @@ class Attention(Module):
         """
         B, T, C = input.size()
 
-        """YOUR CODE HERE"""
+        # 1. Tạo ma trận K, Q, V từ input bằng các layer tương ứng
+        K = self.k_layer(input)
+        Q = self.q_layer(input)
+        V = self.v_layer(input)
 
+        # 2. Chuyển vị ma trận K bằng movedim hoán đổi chiều thứ 2 và thứ 3
+        # K ban đầu có shape (B, T, C) -> K_T có shape (B, C, T)
+        K_T = movedim(K, 1, 2)
+
+        # 3. Tính ma trận điểm số tích vô hướng chia cho sqrt(layer_size)
+        M = matmul(Q, K_T) / (self.layer_size ** 0.5)
+
+        # 4. Áp dụng Causal Mask theo đúng cú pháp hướng dẫn trong docstring
+        M = M.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))[0]
+
+        # 5. Áp dụng softmax trên chiều cuối cùng (dim=-1)
+        attention_weights = softmax(M, dim=-1)
+
+        # 6. Nhân ma trận trọng số với V để ra kết quả đầu ra
+        out = matmul(attention_weights, V)
+
+        return out
