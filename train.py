@@ -72,7 +72,7 @@ def train_regression(model, dataset):
     # Khởi tạo bộ tối ưu hóa Adam để tự động cập nhật trọng số (learning rate = 0.01 là tối ưu)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     # Tạo đối tượng DataLoader để chia dữ liệu thành các batch
-    dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=200, shuffle=True)
 
     # Vòng lặp huấn luyện, tối đa 10000 lần lặp
     for epoch in range(10000):
@@ -132,7 +132,7 @@ def train_languageid(model, dataset):
     dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-    for epoch in range(100):
+    for epoch in range(1):
         for batch in dataloader:
             # Chuyển dữ liệu từ (batch_size, length, num_chars)
             # thành (length, batch_size, num_chars)
