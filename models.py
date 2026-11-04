@@ -251,11 +251,10 @@ def Convolve(input: tensor, weight: tensor):
     out_h, out_w = H - kh + 1, W - kw + 1
     Output_Tensor = zeros((out_h, out_w))
 
-    # Trượt kernel qua từng vùng ảnh và tính tích vô hướng
-    for i in range(out_h):
-        for j in range(out_w):
-            patch = input[i : i + kh, j : j + kw]
-            Output_Tensor[i, j] = tensordot(patch, weight, dims=([0, 1], [0, 1]))
+    # Tối ưu: lặp qua kernel (kh x kw = 9 lần) thay vì lặp qua từng ô ảnh (676 lần)
+    for u in range(kh):
+        for v in range(kw):
+            Output_Tensor = Output_Tensor + input[u : u + out_h, v : v + out_w] * weight[u, v]
     "*** End Code ***"
     return Output_Tensor
 
