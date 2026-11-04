@@ -300,41 +300,72 @@ class DigitConvolutionalModel(Module):
         return self.fc2(h)
 
 
-class Attention(Module):
+import torch
+from torch import nn
+from torch import matmul, movedim, tril, ones
+from torch.nn.functional import softmax
+
+# 1. Định nghĩa lớp Attention hoàn chỉnh trực tiếp tại đây
+class Attention(nn.Module):
     def __init__(self, layer_size, block_size):
         super().__init__()
-        """
-        All the layers you should use are defined here.
+        
+        # Các layer tuyến tính cho K, Q, V
+        self.k_layer = nn.Linear(layer_size, layer_size)
+        self.q_layer = nn.Linear(layer_size, layer_size)
+        self.v_layer = nn.Linear(layer_size, layer_size)
 
-        In order to pass the autograder, make sure each linear layer matches up with their corresponding matrix,
-        ie: use self.k_layer to generate the K matrix.
-        """
-        self.k_layer = Linear(layer_size, layer_size)
-        self.q_layer = Linear(layer_size, layer_size)
-        self.v_layer = Linear(layer_size, layer_size)
-
-        # Masking part of attention layer
+        # Causal mask
         self.register_buffer(
             "mask",
-            tril(ones(block_size, block_size)).view(1, 1, block_size, block_size),
+            tril(ones(block_size, block_size)).view(1, 1, block_size, block_size)
         )
-
         self.layer_size = layer_size
 
     def forward(self, input):
-        """
-        Applies the attention mechanism to input. All necessary layers have
-        been defined in __init__()
-
-        In order to apply the causal mask to a given matrix M, you should update
-        it as such:
-
-        M = M.masked_fill(self.mask[:,:,:T,:T] == 0, float('-inf'))[0]
-
-        For the softmax activation, it should be applied to the last dimension of the input,
-        Take a look at the "dim" argument of torch.nn.functional.softmax to figure out how to do this.
-        """
         B, T, C = input.size()
 
-        """YOUR CODE HERE"""
+        # Chiếu input qua các layer tương ứng
+        K = self.k_layer(input)
+        Q = self.q_layer(input)
+        V = self.v_layer(input)
 
+        # Hoán đổi chiều 1 và 2 để chuyển vị K
+        K_T = movedim(K, 1, 2)
+
+        # Tích vô hướng có chia tỷ lệ
+        scores = matmul(Q, K_T) / (self.layer_size ** 0.5)
+
+        # Áp dụng causal mask theo đúng công thức đề bài
+        scores = scores.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))[0]
+
+        # Softmax trên chiều cuối cùng
+        attention_weights = softmax(scores, dim=-1)
+
+        # Nhân ma trận trọng số với V
+        out = matmul(attention_weights, V)
+        return out
+
+
+# 2. Chạy thử nghiệm độc lập
+if __name__ == "__main__":
+    batch_size = 2
+    seq_len = 5
+    layer_size = 16
+    block_size = 8
+
+    # Khởi tạo layer và tensor đầu vào giả lập
+    attention = Attention(layer_size=layer_size, block_size=block_size)
+    dummy_input = torch.randn(batch_size, seq_len, layer_size)
+
+    # Chạy forward pass
+    output = attention(dummy_input)
+
+    print("--- KẾT QUẢ KIỂM TRA ---")
+    print("Input shape :", dummy_input.shape)
+    print("Output shape:", output.shape)
+    
+    # Kiểm tra kích thước
+    assert output.shape == dummy_input.shape, "Lỗi: Output shape không khớp Input shape!"
+    assert not torch.isnan(output).any(), "Lỗi: Có giá trị NaN trong đầu ra!"
+    print("Kiểm tra thành công: Hàm forward hoạt động bình thường, không phát sinh lỗi.")
