@@ -1,4 +1,5 @@
 from torch import no_grad
+import torch
 from torch.utils.data import DataLoader
 
 
@@ -69,13 +70,13 @@ def train_regression(model, dataset):
         
     """
     "*** YOUR CODE HERE ***"
-    # Khởi tạo bộ tối ưu hóa Adam để tự động cập nhật trọng số (learning rate = 0.01 là tối ưu)
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    # Khởi tạo bộ tối ưu hóa Adam để tự động cập nhật trọng số 
+    optimizer = optim.Adam(model.parameters(), lr=0.1)
     # Tạo đối tượng DataLoader để chia dữ liệu thành các batch
-    dataloader = DataLoader(dataset, batch_size=200, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
 
     # Vòng lặp huấn luyện, tối đa 10000 lần lặp
-    for epoch in range(10000):
+    for epoch in range(100):
         for batch in dataloader:
             # Lấy features (x) và label từ dictionary theo đúng yêu cầu đề bài
             x = batch['x']
@@ -84,14 +85,18 @@ def train_regression(model, dataset):
             # 5 bước huấn luyện tiêu chuẩn
             optimizer.zero_grad()                     # Xóa gradient cũ để tránh cộng dồn
             prediction = model(x)                     # Lấy dự đoán từ model (dạng tensor)
-            loss = regression_loss(prediction, label) # Tính sai số
+            loss = regression_loss(prediction, label) # Tính sai số (MSE)
             loss.backward()                           # Tính gradient dựa trên sai số
             optimizer.step()                          # Cập nhật trọng số dựa trên gradient và learning rate
 
-            with no_grad():
-                updated_loss = regression_loss(model(x), label) # Tính lại sai số sau khi cập nhật trọng số
         # Kiểm tra điều kiện dừng: nếu sai số nhỏ hơn 0.02, thoát vòng lặp
-        if updated_loss.item() <= 0.02:
+        # Sau mỗi epoch, đánh giá lại loss trên toàn bộ tập dữ liệu để kiểm tra điều kiện dừng
+        with no_grad():
+            full_x = torch.tensor(dataset.x, dtype=torch.float32)
+            full_y = torch.tensor(dataset.y, dtype=torch.float32)
+            eval_loss = regression_loss(model(full_x), full_y).item()
+
+        if eval_loss <= 0.02:
             break
 
 
@@ -102,10 +107,10 @@ def train_digitclassifier(model, dataset):
     model.train()
     """ YOUR CODE HERE """
     dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
 
     # Vòng lặp huấn luyện, tối đa 1000 lần lặp
-    for epoch in range(1000):
+    for epoch in range(100):
         for batch in dataloader:
             x = batch['x']
             label = batch['label']
@@ -121,8 +126,8 @@ def train_digitclassifier(model, dataset):
         with no_grad():
             val_accuracy = dataset.get_validation_accuracy()
 
-        # Test Accuracy >= 97% để dừng huấn luyện
-        if val_accuracy >= 0.97:
+        # Test Accuracy >= 97,5% để dừng huấn luyện
+        if val_accuracy >= 0.975:
             break
 
 
@@ -132,7 +137,7 @@ def train_languageid(model, dataset):
     dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-    for epoch in range(1):
+    for epoch in range(1000):
         for batch in dataloader:
             # Chuyển dữ liệu từ (batch_size, length, num_chars)
             # thành (length, batch_size, num_chars)

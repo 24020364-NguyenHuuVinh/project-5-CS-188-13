@@ -1,0 +1,5 @@
+Pacman is a classic arcade game developed by Namco in 1980. 
+In the game, Pacman navigates a maze to consume all pellets while avoiding four colored ghosts: Blinky, Pinky, Inky, and Clyde. 
+When Pacman eats a power pellet, the ghosts turn blue, allowing Pacman to eat them for extra points. 
+Artificial intelligence techniques like search algorithms, Markov decision processes, reinforcement learning, and neural networks can be used to control Pacman autonomously.
+Pacman searches for the optimal path to clear the maze safely and achieve the highest score.
