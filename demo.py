@@ -1,5 +1,5 @@
 """
-demo1.py
+demo.py
 HỆ THỐNG THỬ NGHIỆM MÔ HÌNH HỌC MÁY (CS188 PROJECT 5)
 
 Bao gồm 5 bài toán:
@@ -29,6 +29,8 @@ import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+matplotlib.rcParams['font.sans-serif'] = ['Segoe UI', 'Arial', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False
 
 import numpy as np
 import torch
@@ -80,7 +82,6 @@ def load_model_weights(model, name):
     backups = {
         "q3": os.path.join("checkpoints", "mlp_mnist.pt"),
         "q5": os.path.join("checkpoints", "cnn_mnist.pt"),
-        "q5_full": os.path.join("checkpoints", "cnn_mnist.pt"),
     }
     if name in backups and os.path.exists(backups[name]):
         model.load_state_dict(torch.load(backups[name], map_location="cpu"))
@@ -248,7 +249,7 @@ class BaseLabView(tk.Frame):
         self.lock_list = []
         self.status = tk.StringVar(value="Sẵn sàng.")
 
-    def add_console_box(self, parent, height=5):
+    def add_console_box(self, parent, height=7):
         frame = tk.LabelFrame(parent, text=" Nhật ký thực thi ", font=("Segoe UI", 9, "bold"),
                               fg="#334155", bg="#ffffff", bd=1, relief=tk.SOLID, padx=6, pady=4)
         self.console = tk.Text(
@@ -434,7 +435,7 @@ class PerceptronModule(BaseLabView):
         self.canvas = FigureCanvasTkAgg(self.fig, master=chart_frame)
         self.canvas.get_tk_widget().pack(fill="both", expand=True)
 
-        self.add_console_box(self, height=4).pack(fill="x", padx=10, pady=(0, 8))
+        self.add_console_box(self, height=7).pack(fill="x", padx=10, pady=(0, 8))
         self.reset_data()
 
     def reset_data(self):
@@ -535,39 +536,43 @@ class RegressionModule(BaseLabView):
         bar = tk.Frame(self, bg="#ffffff", bd=1, relief=tk.SOLID, padx=10, pady=8)
         bar.pack(fill="x", padx=10, pady=8)
 
-        tk.Label(bar, text="Learning Rate:", font=("Segoe UI", 9), bg="#ffffff").pack(side="left")
+        tk.Label(bar, text="LR:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
         self.var_lr = tk.StringVar(value="0.1")
-        ttk.Combobox(bar, textvariable=self.var_lr, values=["0.1", "0.05", "0.01", "0.001"], width=6).pack(side="left", padx=(2, 8))
+        tk.Entry(bar, textvariable=self.var_lr, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
 
-        tk.Label(bar, text="Batch Size:", font=("Segoe UI", 9), bg="#ffffff").pack(side="left")
+        tk.Label(bar, text="Batch:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
         self.var_bs = tk.StringVar(value="100")
-        ttk.Combobox(bar, textvariable=self.var_bs, values=["16", "50", "100", "200"], width=5).pack(side="left", padx=(2, 8))
+        tk.Entry(bar, textvariable=self.var_bs, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
 
-        tk.Label(bar, text="Ngưỡng Loss:", font=("Segoe UI", 9), bg="#ffffff").pack(side="left")
+        tk.Label(bar, text="Ngưỡng Loss:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
         self.var_tgt = tk.StringVar(value="0.02")
-        tk.Entry(bar, textvariable=self.var_tgt, width=5, bd=1, relief=tk.SOLID).pack(side="left", padx=(2, 10))
+        tk.Entry(bar, textvariable=self.var_tgt, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
+
+        tk.Label(bar, text="Max Epoch:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_ep = tk.StringVar(value="100")
+        tk.Entry(bar, textvariable=self.var_ep, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 8))
 
         btn_fit = tk.Button(bar, text="▶ Train Hồi quy", bg="#2563eb", fg="#ffffff",
-                            font=("Segoe UI", 9, "bold"), bd=0, padx=10, pady=3,
+                            font=("Segoe UI", 9, "bold"), bd=0, padx=8, pady=3,
                             cursor="hand2", command=self.train_single)
         btn_load = tk.Button(bar, text="💾 Nạp Trọng số", bg="#f1f5f9", fg="#0f172a",
-                             font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=8, pady=3,
+                             font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=6, pady=3,
                              cursor="hand2", command=self.load_checkpoint)
-        btn_bench = tk.Button(bar, text="📊 Chạy Benchmark Q2", bg="#f59e0b", fg="#000000",
-                              font=("Segoe UI", 9, "bold"), bd=0, padx=10, pady=3,
+        btn_bench = tk.Button(bar, text="⚡ Benchmark Q2", bg="#f59e0b", fg="#000000",
+                              font=("Segoe UI", 9, "bold"), bd=0, padx=8, pady=3,
                               cursor="hand2", command=self.run_benchmark)
-        self.btn_toggle = tk.Button(bar, text="🔄 Xem Biểu đồ Benchmark", bg="#f1f5f9", fg="#0f172a",
-                                    font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=8, pady=3,
+        self.btn_toggle = tk.Button(bar, text="📊 Xem Benchmark", bg="#f1f5f9", fg="#0f172a",
+                                    font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=6, pady=3,
                                     cursor="hand2", command=self.toggle_view)
-        self.btn_save_png = tk.Button(bar, text="🖼️ Xuất PNG", bg="#f1f5f9", fg="#64748b",
-                                      font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=8, pady=3,
+        self.btn_save_png = tk.Button(bar, text="💾 Xuất PNG", bg="#f1f5f9", fg="#64748b",
+                                      font=("Segoe UI", 9, "bold"), bd=1, relief=tk.SOLID, padx=8, pady=3,
                                       state="disabled", command=self.export_png)
 
         btn_fit.pack(side="left", padx=2)
         btn_load.pack(side="left", padx=2)
         btn_bench.pack(side="left", padx=2)
         self.btn_toggle.pack(side="left", padx=2)
-        self.btn_save_png.pack(side="left", padx=2)
+        self.btn_save_png.pack(side="right", padx=(4, 0))
 
         self.lock_list = [btn_fit, btn_load, btn_bench, self.btn_toggle, self.btn_save_png]
 
@@ -578,7 +583,7 @@ class RegressionModule(BaseLabView):
         self.canvas = FigureCanvasTkAgg(self.fig, master=chart_frame)
         self.canvas.get_tk_widget().pack(fill="both", expand=True)
 
-        self.add_console_box(self, height=5).pack(fill="x", padx=10, pady=(0, 8))
+        self.add_console_box(self, height=7).pack(fill="x", padx=10, pady=(0, 8))
         self.draw_sin()
 
     def draw_sin(self):
@@ -631,7 +636,7 @@ class RegressionModule(BaseLabView):
         colors_lr = {0.1: "#ef4444", 0.01: "#10b981", 0.001: "#f59e0b", 0.0001: "#8b5cf6"}
         for r in lr_res:
             l = r["lr"]
-            ax2.plot(r["loss_history"], label=f"LR = {l} ({r['epochs']} ep)",
+            ax2.plot(r["loss_history"], label=f"LR = {l} ({r['epochs']} ep, {r['elapsed_time']:.2f}s)",
                      color=colors_lr.get(l, "#3b82f6"), linewidth=2)
         ax2.axhline(y=0.02, color="#000000", linestyle="--", alpha=0.7, label="Ngưỡng đề (0.02)")
         ax2.set_title("Ảnh hưởng của Learning Rate (Batch = 100)", fontsize=9, fontweight="bold")
@@ -647,14 +652,14 @@ class RegressionModule(BaseLabView):
     def toggle_view(self):
         if self.view_mode == "sin":
             if self.bench_data is None:
-                messagebox.showinfo("Thông báo", "Vui lòng bấm 'Chạy Benchmark Q2' trước để có số liệu.")
+                messagebox.showinfo("Thông báo", "Vui lòng bấm '⚡ Benchmark Q2' trước để có số liệu.")
                 return
             self.view_mode = "benchmark"
-            self.btn_toggle.config(text="🔄 Xem Đồ thị sin(x)")
+            self.btn_toggle.config(text="📈 Xem Đồ thị sin(x)")
             self.draw_benchmark()
         else:
             self.view_mode = "sin"
-            self.btn_toggle.config(text="🔄 Xem Biểu đồ Benchmark")
+            self.btn_toggle.config(text="📊 Xem Benchmark")
             self.draw_sin()
 
     def train_single(self):
@@ -662,13 +667,14 @@ class RegressionModule(BaseLabView):
             lr = float(self.var_lr.get())
             bs = int(self.var_bs.get())
             tgt = float(self.var_tgt.get())
+            max_ep = int(self.var_ep.get())
         except ValueError:
-            messagebox.showerror("Lỗi", "Vui lòng nhập đúng tham số LR, Batch, Ngưỡng.")
+            messagebox.showerror("Lỗi", "Vui lòng nhập đúng tham số LR, Batch, Ngưỡng, Max Epoch.")
             return
 
         self.view_mode = "sin"
         self.btn_toggle.config(text="🔄 Xem Biểu đồ Benchmark")
-        self.status.set(f"Đang huấn luyện (LR={lr}, Batch={bs})...")
+        self.status.set(f"Đang huấn luyện (LR={lr}, Batch={bs}, Max {max_ep} epochs)...")
 
         def task():
             torch.manual_seed(1)
@@ -678,7 +684,7 @@ class RegressionModule(BaseLabView):
             loader = DataLoader(dataset, batch_size=bs, shuffle=True)
             opt = optim.Adam(self.model.parameters(), lr=lr)
 
-            for epoch in range(1, 201):
+            for epoch in range(1, max_ep + 1):
                 if self.app.is_cancelled():
                     print("-> Đã nhận lệnh dừng huấn luyện Q2.")
                     break
@@ -695,8 +701,8 @@ class RegressionModule(BaseLabView):
                     fy = torch.tensor(dataset.y, dtype=torch.float32)
                     cur_loss = losses.regression_loss(self.model(fx), fy).item()
 
-                if epoch % 5 == 0 or cur_loss <= tgt:
-                    print(f"Epoch {epoch:3d} | MSE Loss: {cur_loss:.5f}")
+                if epoch % 5 == 0 or cur_loss <= tgt or epoch == max_ep:
+                    print(f"Epoch {epoch:3d}/{max_ep} | MSE Loss: {cur_loss:.5f}")
 
                 if cur_loss <= tgt:
                     print(f"-> Hội tụ tại epoch {epoch} (Loss: {cur_loss:.5f} <= {tgt})!")
@@ -809,8 +815,8 @@ class RegressionModule(BaseLabView):
                 self.status.set("Đã dừng Benchmark Q2.")
             elif self.bench_data:
                 self.view_mode = "benchmark"
-                self.btn_toggle.config(text="🔄 Xem Đồ thị sin(x)")
-                self.btn_save_png.config(state="normal")
+                self.btn_toggle.config(text="📈 Xem Đồ thị sin(x)")
+                self.btn_save_png.config(state="normal", bg="#10b981", fg="#ffffff", cursor="hand2")
                 self.draw_benchmark()
                 self.status.set("Benchmark Q2 hoàn tất! Biểu đồ so sánh đã sẵn sàng.")
 
@@ -819,9 +825,11 @@ class RegressionModule(BaseLabView):
     def export_png(self):
         try:
             target = "benchmark_q2_comparison.png"
-            self.fig.savefig(target)
-            messagebox.showinfo("Đã lưu", f"Biểu đồ đã được lưu tại: {target}")
+            self.fig.savefig(target, dpi=130, bbox_inches="tight")
+            messagebox.showinfo("Đã xuất PNG", f"Biểu đồ Q2 đã được lưu tại:\n{os.path.abspath(target)}")
+            self.status.set(f"Đã xuất file {target}.")
         except Exception as e:
+            messagebox.showerror("Lỗi xuất ảnh", str(e))
             self.status.set(f"Lỗi: {e}")
 
     def load_checkpoint(self):
@@ -855,35 +863,39 @@ class DigitClassificationModule(BaseLabView):
         bar = tk.Frame(self, bg="#ffffff", bd=1, relief=tk.SOLID, padx=10, pady=8)
         bar.pack(fill="x", padx=10, pady=8)
 
-        tk.Label(bar, text="Learning Rate:", font=("Segoe UI", 9), bg="#ffffff").pack(side="left")
-        self.var_lr = tk.StringVar(value="0.001")
-        ttk.Combobox(bar, textvariable=self.var_lr, values=["0.01", "0.001", "0.0001"], width=7).pack(side="left", padx=(2, 8))
+        tk.Label(bar, text="LR:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_lr = tk.StringVar(value="0.01")
+        tk.Entry(bar, textvariable=self.var_lr, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
 
-        tk.Label(bar, text="Batch Size:", font=("Segoe UI", 9), bg="#ffffff").pack(side="left")
+        tk.Label(bar, text="Batch:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
         self.var_bs = tk.StringVar(value="100")
-        ttk.Combobox(bar, textvariable=self.var_bs, values=["50", "100", "200"], width=5).pack(side="left", padx=(2, 8))
+        tk.Entry(bar, textvariable=self.var_bs, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
 
-        tk.Label(bar, text="Ngưỡng dừng:", font=("Segoe UI", 9), bg="#ffffff").pack(side="left")
+        tk.Label(bar, text="Mục tiêu:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
         self.var_stop = tk.StringVar(value="97.5%")
-        ttk.Combobox(bar, textvariable=self.var_stop, values=["97.0%", "97.5%", "98.0%"], width=6).pack(side="left", padx=(2, 10))
+        tk.Entry(bar, textvariable=self.var_stop, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
 
-        btn_fit = tk.Button(bar, text="▶ Train Mô hình", bg="#2563eb", fg="#ffffff",
-                            font=("Segoe UI", 9, "bold"), bd=0, padx=10, pady=3,
+        tk.Label(bar, text="Max Ep:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_ep = tk.StringVar(value="20")
+        tk.Entry(bar, textvariable=self.var_ep, width=4, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 8))
+
+        btn_fit = tk.Button(bar, text="▶ Train Model", bg="#2563eb", fg="#ffffff",
+                            font=("Segoe UI", 9, "bold"), bd=0, padx=8, pady=3,
                             cursor="hand2", command=self.train_model)
         btn_load = tk.Button(bar, text="💾 Nạp Trọng số", bg="#f1f5f9", fg="#0f172a",
-                             font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=8, pady=3,
+                             font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=6, pady=3,
                              cursor="hand2", command=self.load_checkpoint)
         btn_eval = tk.Button(bar, text="🎯 Đo Test Acc", bg="#10b981", fg="#ffffff",
-                             font=("Segoe UI", 9, "bold"), bd=0, padx=10, pady=3,
+                             font=("Segoe UI", 9, "bold"), bd=0, padx=8, pady=3,
                              cursor="hand2", command=self.eval_test)
-        btn_bench = tk.Button(bar, text="📊 Chạy Benchmark Q3", bg="#f59e0b", fg="#000000",
-                              font=("Segoe UI", 9, "bold"), bd=0, padx=10, pady=3,
+        btn_bench = tk.Button(bar, text="⚡ Benchmark Q3", bg="#f59e0b", fg="#000000",
+                              font=("Segoe UI", 9, "bold"), bd=0, padx=8, pady=3,
                               cursor="hand2", command=self.run_benchmark)
-        self.btn_toggle = tk.Button(bar, text="🔄 Chuyển sang Biểu đồ Benchmark", bg="#f1f5f9", fg="#0f172a",
-                                    font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=8, pady=3,
+        self.btn_toggle = tk.Button(bar, text="📊 Xem Benchmark", bg="#f1f5f9", fg="#0f172a",
+                                    font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=6, pady=3,
                                     cursor="hand2", command=self.toggle_mode)
-        self.btn_save_png = tk.Button(bar, text="🖼️ Xuất PNG", bg="#f1f5f9", fg="#64748b",
-                                      font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=8, pady=3,
+        self.btn_save_png = tk.Button(bar, text="💾 Xuất PNG", bg="#f1f5f9", fg="#64748b",
+                                      font=("Segoe UI", 9, "bold"), bd=1, relief=tk.SOLID, padx=8, pady=3,
                                       state="disabled", command=self.export_png)
 
         btn_fit.pack(side="left", padx=2)
@@ -891,7 +903,7 @@ class DigitClassificationModule(BaseLabView):
         btn_eval.pack(side="left", padx=2)
         btn_bench.pack(side="left", padx=2)
         self.btn_toggle.pack(side="left", padx=2)
-        self.btn_save_png.pack(side="left", padx=2)
+        self.btn_save_png.pack(side="right", padx=(4, 0))
 
         self.lock_list = [btn_fit, btn_load, btn_eval, btn_bench, self.btn_toggle, self.btn_save_png]
 
@@ -938,7 +950,7 @@ class DigitClassificationModule(BaseLabView):
         self.canvas_bench = FigureCanvasTkAgg(self.fig_bench, master=self.view_bench)
         self.canvas_bench.get_tk_widget().pack(fill="both", expand=True)
 
-        self.add_console_box(self, height=5).pack(fill="x", padx=10, pady=(0, 8))
+        self.add_console_box(self, height=7).pack(fill="x", padx=10, pady=(0, 8))
         self.status.set("Hãy vẽ thử một chữ số hoặc bấm Huấn luyện / Benchmark Q3.")
 
     def _ensure_instances(self):
@@ -1024,11 +1036,12 @@ class DigitClassificationModule(BaseLabView):
             bs = int(self.var_bs.get())
             tgt_str = self.var_stop.get().replace("%", "").strip()
             tgt_acc = float(tgt_str) / 100.0 if float(tgt_str) > 1.0 else float(tgt_str)
+            max_ep = int(self.var_ep.get())
         except ValueError:
-            messagebox.showerror("Lỗi", "Vui lòng nhập đúng số cho LR, Batch, Ngưỡng.")
+            messagebox.showerror("Lỗi", "Vui lòng nhập đúng số cho LR, Batch, Ngưỡng, Max Ep.")
             return
 
-        self.status.set("Đang huấn luyện mô hình MLP...")
+        self.status.set(f"Đang huấn luyện mô hình MLP (Max {max_ep} epochs)...")
 
         def task():
             torch.manual_seed(42)
@@ -1038,8 +1051,8 @@ class DigitClassificationModule(BaseLabView):
             loader = DataLoader(self.dataset, batch_size=bs, shuffle=True)
             opt = optim.Adam(self.model.parameters(), lr=lr)
 
-            print(f"Huấn luyện DigitClassificationModel (LR={lr}, Batch={bs}, Dừng an toàn >={tgt_acc*100:.1f}%):")
-            for ep in range(1, 21):
+            print(f"\n--- BẮT ĐẦU HUẤN LUYỆN MLP (LR={lr}, Batch={bs}, Dừng an toàn >={tgt_acc*100:.1f}%, Max Ep={max_ep}) ---")
+            for ep in range(1, max_ep + 1):
                 if self.app.is_cancelled():
                     print("-> Đã nhận lệnh dừng huấn luyện Q3.")
                     break
@@ -1058,7 +1071,7 @@ class DigitClassificationModule(BaseLabView):
                 self.model.eval()
                 with torch.no_grad():
                     val_acc = self.dataset.get_validation_accuracy()
-                print(f"   [Epoch {ep:2d}] Loss: {avg_l:.4f} | Val Accuracy: {val_acc*100:6.2f}%")
+                print(f"   [Epoch {ep:2d}/{max_ep}] Loss: {avg_l:.4f} | Val Accuracy: {val_acc*100:6.2f}%")
 
                 if val_acc >= tgt_acc:
                     print(f"-> [HỘI TỤ AN TOÀN] Vượt ngưỡng an toàn {tgt_acc*100:.1f}% tại Epoch {ep}! Dừng.")
@@ -1106,12 +1119,13 @@ class DigitClassificationModule(BaseLabView):
                 with torch.no_grad():
                     va = ds.get_validation_accuracy()
                 val_hist.append(va)
-                print(f"      [Epoch {ep:2d}/{max_ep}] Loss: {loss_hist[-1]:.4f} | Val Acc: {va*100:6.2f}%")
+                ep_time = time.perf_counter() - t0
+                print(f"      [Epoch {ep:2d}/{max_ep}] Loss: {loss_hist[-1]:.4f} | Val Acc: {va*100:6.2f}% | Thời gian: {ep_time:.1f}s")
 
                 if va >= target_val_acc:
                     conv = True
                     conv_ep = ep
-                    print(f"      -> [ĐÃ HỘI TỤ] Vượt ngưỡng an toàn {target_val_acc*100:.1f}% tại Epoch {ep}!")
+                    print(f"      -> [ĐÃ HỘI TỤ] Vượt ngưỡng an toàn {target_val_acc*100:.1f}% tại Epoch {ep} ({ep_time:.1f}s)!")
                     break
 
             elapsed = time.perf_counter() - t0
@@ -1189,8 +1203,8 @@ class DigitClassificationModule(BaseLabView):
                 self.mode = "benchmark"
                 self.view_sketch.pack_forget()
                 self.view_bench.pack(fill="both", expand=True)
-                self.btn_toggle.config(text="🔄 Chuyển sang Bảng vẽ & Dự đoán")
-                self.btn_save_png.config(state="normal")
+                self.btn_toggle.config(text="🎨 Xem Bảng vẽ")
+                self.btn_save_png.config(state="normal", bg="#10b981", fg="#ffffff", cursor="hand2")
                 self.status.set("Benchmark Q3 hoàn tất! Đã cập nhật 2 biểu đồ so sánh hội tụ.")
 
         self.run_task("Benchmark Siêu tham số (Q3)", task, on_done=on_bench_complete)
@@ -1210,7 +1224,7 @@ class DigitClassificationModule(BaseLabView):
             l = r["lr"]
             eps = list(range(1, len(r["val_acc_history"]) + 1))
             accs = [v * 100 for v in r["val_acc_history"]]
-            ax1.plot(eps, accs, marker='o', label=f"LR = {l} ({r['epochs']} ep, Test: {r['final_test_acc']*100:.2f}%)",
+            ax1.plot(eps, accs, marker='o', label=f"LR = {l} ({r['epochs']} ep, {r['elapsed_time']:.1f}s, Test: {r['final_test_acc']*100:.2f}%)",
                      color=lr_colors.get(l, "#3b82f6"), linewidth=2)
         ax1.axhline(y=97.5, color="#ef4444", linestyle=":", linewidth=2, alpha=0.9, label="Dừng an toàn (97.5%)")
         ax1.axhline(y=97.0, color="#000000", linestyle="--", linewidth=1.5, alpha=0.7, label="Ngưỡng đề (97.0%)")
@@ -1226,7 +1240,7 @@ class DigitClassificationModule(BaseLabView):
             b = r["batch_size"]
             eps = list(range(1, len(r["val_acc_history"]) + 1))
             accs = [v * 100 for v in r["val_acc_history"]]
-            ax2.plot(eps, accs, marker='s', label=f"Batch {b} ({r['epochs']} ep, Test: {r['final_test_acc']*100:.2f}%)",
+            ax2.plot(eps, accs, marker='s', label=f"Batch {b} ({r['epochs']} ep, {r['elapsed_time']:.1f}s, Test: {r['final_test_acc']*100:.2f}%)",
                      color=bs_colors.get(b, "#10b981"), linewidth=2)
         ax2.axhline(y=97.5, color="#ef4444", linestyle=":", linewidth=2, alpha=0.9, label="Dừng an toàn (97.5%)")
         ax2.axhline(y=97.0, color="#000000", linestyle="--", linewidth=1.5, alpha=0.7, label="Ngưỡng đề (97.0%)")
@@ -1243,25 +1257,27 @@ class DigitClassificationModule(BaseLabView):
     def toggle_mode(self):
         if self.mode == "canvas":
             if self.bench_data is None:
-                messagebox.showinfo("Thông báo", "Vui lòng bấm 'Chạy Benchmark Q3' trước để có số liệu.")
+                messagebox.showinfo("Thông báo", "Vui lòng bấm '⚡ Benchmark Q3' trước để có số liệu.")
                 return
             self.mode = "benchmark"
             self.view_sketch.pack_forget()
             self.view_bench.pack(fill="both", expand=True)
-            self.btn_toggle.config(text="🔄 Chuyển sang Bảng vẽ & Dự đoán")
+            self.btn_toggle.config(text="🎨 Xem Bảng vẽ")
             self.draw_benchmark()
         else:
             self.mode = "canvas"
             self.view_bench.pack_forget()
             self.view_sketch.pack(fill="both", expand=True)
-            self.btn_toggle.config(text="🔄 Chuyển sang Biểu đồ Benchmark")
+            self.btn_toggle.config(text="📊 Xem Benchmark")
 
     def export_png(self):
         try:
             target = "benchmark_q3_comparison.png"
-            self.fig_bench.savefig(target)
-            messagebox.showinfo("Đã lưu", f"Biểu đồ đã được lưu tại: {target}")
+            self.fig_bench.savefig(target, dpi=130, bbox_inches="tight")
+            messagebox.showinfo("Đã xuất PNG", f"Biểu đồ Q3 đã được lưu tại:\n{os.path.abspath(target)}")
+            self.status.set(f"Đã xuất file {target}.")
         except Exception as e:
+            messagebox.showerror("Lỗi xuất ảnh", str(e))
             self.status.set(f"Lỗi: {e}")
 
     def load_checkpoint(self):
@@ -1298,14 +1314,30 @@ class LanguageIDModule(BaseLabView):
         bar = tk.Frame(self, bg="#ffffff", bd=1, relief=tk.SOLID, padx=10, pady=8)
         bar.pack(fill="x", padx=10, pady=8)
 
+        tk.Label(bar, text="LR:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_lr = tk.StringVar(value="0.01")
+        tk.Entry(bar, textvariable=self.var_lr, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
+
+        tk.Label(bar, text="Batch:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_bs = tk.StringVar(value="100")
+        tk.Entry(bar, textvariable=self.var_bs, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
+
+        tk.Label(bar, text="Mục tiêu:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_stop = tk.StringVar(value="85%")
+        tk.Entry(bar, textvariable=self.var_stop, width=5, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
+
+        tk.Label(bar, text="Max Ep:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_ep = tk.StringVar(value="25")
+        tk.Entry(bar, textvariable=self.var_ep, width=4, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 8))
+
         btn_fit = tk.Button(bar, text="▶ Train Mạng RNN", bg="#2563eb", fg="#ffffff",
-                            font=("Segoe UI", 9, "bold"), bd=0, padx=12, pady=4,
+                            font=("Segoe UI", 9, "bold"), bd=0, padx=10, pady=3,
                             cursor="hand2", command=self.train_rnn)
         btn_load = tk.Button(bar, text="💾 Nạp Trọng số (q4.pt)", bg="#f1f5f9", fg="#0f172a",
-                             font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=10, pady=4,
+                             font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=8, pady=3,
                              cursor="hand2", command=self.load_checkpoint)
         btn_eval = tk.Button(bar, text="🎯 Đo Val Accuracy", bg="#10b981", fg="#ffffff",
-                             font=("Segoe UI", 9, "bold"), bd=0, padx=12, pady=4,
+                             font=("Segoe UI", 9, "bold"), bd=0, padx=10, pady=3,
                              cursor="hand2", command=self.measure_accuracy)
 
         btn_fit.pack(side="left", padx=3)
@@ -1436,15 +1468,14 @@ class LanguageIDModule(BaseLabView):
         ).pack(anchor="w")
 
         # 3. Nhật ký thực thi
-        self.add_console_box(self, height=5).pack(fill="x", padx=10, pady=(0, 8))
+        self.add_console_box(self, height=7).pack(fill="x", padx=10, pady=(0, 8))
         self.status.set("Sẵn sàng. Hãy Train RNN hoặc Nạp trọng số q4.pt để bắt đầu thử nghiệm.")
 
     def _ensure_dataset(self):
         if self.dataset is None:
-            if self.model is None:
-                self.model = models.LanguageIDModel()
-            self.dataset = backend.LanguageIDDataset(self.model)
-        else:
+            temp_m = self.model if self.model is not None else models.LanguageIDModel()
+            self.dataset = backend.LanguageIDDataset(temp_m)
+        elif self.model is not None:
             self.dataset.model = self.model
 
     def apply_chip(self, word):
@@ -1452,15 +1483,54 @@ class LanguageIDModule(BaseLabView):
         self.predict_word()
 
     def train_rnn(self):
-        self.status.set("Đang huấn luyện mạng RNN...")
+        try:
+            lr = float(self.var_lr.get())
+            bs = int(self.var_bs.get())
+            tgt_str = self.var_stop.get().replace("%", "").strip()
+            tgt_acc = float(tgt_str) / 100.0 if float(tgt_str) > 1.0 else float(tgt_str)
+            max_ep = int(self.var_ep.get())
+        except ValueError:
+            messagebox.showerror("Lỗi", "Vui lòng nhập đúng số cho LR, Batch, Ngưỡng, Max Ep.")
+            return
+
+        self.status.set(f"Đang huấn luyện mạng RNN (Max {max_ep} epochs)...")
 
         def task():
             m = models.LanguageIDModel()
             ds = backend.LanguageIDDataset(m)
-            self.model, self.dataset = m, ds
-            train.train_languageid(m, ds)
+            m.train()
+            loader = DataLoader(ds, batch_size=bs, shuffle=True)
+            opt = optim.Adam(m.parameters(), lr=lr)
+
+            print(f"\n--- BẮT ĐẦU HUẤN LUYỆN RNN (LR={lr}, Batch={bs}, Dừng an toàn >={tgt_acc*100:.1f}%, Max Ep={max_ep}) ---")
+            for epoch in range(1, max_ep + 1):
+                if self.app.is_cancelled():
+                    print("-> Đã nhận lệnh dừng huấn luyện RNN.")
+                    break
+
+                epoch_losses = []
+                for b in loader:
+                    x = torch.movedim(b['x'], 1, 0)
+                    label = b['label']
+                    opt.zero_grad()
+                    pred = m(x)
+                    l = losses.languageid_loss(pred, label)
+                    l.backward()
+                    opt.step()
+                    epoch_losses.append(l.item())
+
+                with torch.no_grad():
+                    val_acc = ds.get_validation_accuracy()
+                avg_l = float(np.mean(epoch_losses)) if epoch_losses else 0.0
+                print(f"Epoch {epoch:2d}/{max_ep} | Loss: {avg_l:.4f} | Val Accuracy: {val_acc*100:6.2f}%")
+
+                if val_acc >= tgt_acc:
+                    print(f"-> [HỘI TỤ AN TOÀN] Vượt ngưỡng yêu cầu {tgt_acc*100:.1f}% tại Epoch {epoch}! Dừng.")
+                    break
+
             if not self.app.is_cancelled():
                 save_model_weights(m, "q4")
+                self.model, self.dataset = m, ds
 
         self.run_task(
             "Huấn luyện RNN (Q4)",
@@ -1485,8 +1555,15 @@ class LanguageIDModule(BaseLabView):
 
     def measure_accuracy(self):
         if self.model is None:
-            self._ensure_dataset()
+            self.status.set("Chưa có mô hình: Bấm Huấn luyện hoặc Nạp trọng số trước.")
+            messagebox.showwarning(
+                "Chưa có mô hình",
+                "Mô hình RNN (Q4) chưa được huấn luyện hoặc chưa nạp trọng số!\n\n"
+                "Vui lòng bấm '▶ Train Mạng RNN' hoặc '💾 Nạp Trọng số' trước."
+            )
+            return
         try:
+            self._ensure_dataset()
             self.model.eval()
             with torch.no_grad():
                 acc = self.dataset.get_validation_accuracy()
@@ -1501,6 +1578,11 @@ class LanguageIDModule(BaseLabView):
     def predict_word(self):
         if self.model is None:
             self.status.set("Chưa có mô hình: Bấm Huấn luyện hoặc Nạp trọng số trước.")
+            messagebox.showwarning(
+                "Chưa có mô hình",
+                "Mô hình RNN (Q4) chưa được huấn luyện hoặc chưa nạp trọng số!\n\n"
+                "Vui lòng bấm '▶ Train Mạng RNN' hoặc '💾 Nạp Trọng số' trước khi phân tích từ."
+            )
             return
 
         word = self.var_word.get().strip().lower()
@@ -1560,14 +1642,26 @@ class ConvolutionalModule(BaseLabView):
         bar = tk.Frame(self, bg="#ffffff", bd=1, relief=tk.SOLID, padx=10, pady=8)
         bar.pack(fill="x", padx=10, pady=8)
 
-        btn_fit = tk.Button(bar, text="▶ Train CNN (5 epochs)", bg="#2563eb", fg="#ffffff",
-                            font=("Segoe UI", 9, "bold"), bd=0, padx=12, pady=4,
+        tk.Label(bar, text="LR:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_lr = tk.StringVar(value="0.004")
+        tk.Entry(bar, textvariable=self.var_lr, width=6, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
+
+        tk.Label(bar, text="Batch:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_bs = tk.StringVar(value="40")
+        tk.Entry(bar, textvariable=self.var_bs, width=4, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 6))
+
+        tk.Label(bar, text="Epochs:", font=("Segoe UI", 9, "bold"), bg="#ffffff").pack(side="left")
+        self.var_ep = tk.StringVar(value="5")
+        tk.Entry(bar, textvariable=self.var_ep, width=4, bd=1, relief=tk.SOLID, font=("Consolas", 9)).pack(side="left", padx=(2, 8))
+
+        btn_fit = tk.Button(bar, text="▶ Train CNN", bg="#2563eb", fg="#ffffff",
+                            font=("Segoe UI", 9, "bold"), bd=0, padx=10, pady=3,
                             cursor="hand2", command=self.train_cnn)
         btn_load = tk.Button(bar, text="💾 Nạp Trọng số CNN", bg="#f1f5f9", fg="#0f172a",
-                             font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=10, pady=4,
+                             font=("Segoe UI", 9), bd=1, relief=tk.SOLID, padx=8, pady=3,
                              cursor="hand2", command=self.load_checkpoint)
         btn_test_conv = tk.Button(bar, text="🔍 Kiểm thử Convolve", bg="#f1f5f9", fg="#f59e0b",
-                                  font=("Segoe UI", 9, "bold"), bd=1, relief=tk.SOLID, padx=10, pady=4,
+                                  font=("Segoe UI", 9, "bold"), bd=1, relief=tk.SOLID, padx=8, pady=3,
                                   cursor="hand2", command=self.test_convolve)
 
         btn_fit.pack(side="left", padx=4)
@@ -1592,12 +1686,17 @@ class ConvolutionalModule(BaseLabView):
 
         btn_row = tk.Frame(left_box, bg="#ffffff")
         btn_row.pack(fill="x", pady=4)
-        tk.Button(btn_row, text="🗑️ Xóa bảng", bg="#f1f5f9", fg="#0f172a", bd=1, relief=tk.SOLID,
-                  padx=6, pady=3, cursor="hand2", command=self.clear_pad).pack(side="left", expand=True, fill="x", padx=1)
-        tk.Button(btn_row, text="⚡ Nhận dạng", bg="#2563eb", fg="#ffffff", bd=0,
-                  padx=6, pady=3, cursor="hand2", command=self.infer_cnn).pack(side="left", expand=True, fill="x", padx=1)
-        tk.Button(btn_row, text="🎲 Mẫu ngẫu nhiên", bg="#f1f5f9", fg="#0f172a", bd=1, relief=tk.SOLID,
-                  padx=6, pady=3, cursor="hand2", command=self.load_random_mnist).pack(side="left", expand=True, fill="x", padx=1)
+        btn_clear = tk.Button(btn_row, text="🗑️ Xóa bảng", bg="#f1f5f9", fg="#0f172a", bd=1, relief=tk.SOLID,
+                              padx=6, pady=3, cursor="hand2", command=self.clear_pad)
+        btn_infer = tk.Button(btn_row, text="⚡ Nhận dạng", bg="#2563eb", fg="#ffffff", bd=0,
+                              padx=6, pady=3, cursor="hand2", command=self.infer_cnn)
+        btn_random = tk.Button(btn_row, text="🎲 Mẫu ngẫu nhiên", bg="#f1f5f9", fg="#0f172a", bd=1, relief=tk.SOLID,
+                               padx=6, pady=3, cursor="hand2", command=self.load_random_mnist)
+        btn_clear.pack(side="left", expand=True, fill="x", padx=1)
+        btn_infer.pack(side="left", expand=True, fill="x", padx=1)
+        btn_random.pack(side="left", expand=True, fill="x", padx=1)
+
+        self.lock_list = [btn_fit, btn_load, btn_test_conv, btn_clear, btn_infer, btn_random]
 
         thumb_row = tk.Frame(left_box, bg="#f8fafc", bd=1, relief=tk.SOLID, padx=6, pady=4)
         thumb_row.pack(fill="x", pady=4)
@@ -1611,15 +1710,14 @@ class ConvolutionalModule(BaseLabView):
         self.chart = ProbChart(content, horizontal=False, with_map=True, figsize=(6.0, 3.8))
         self.chart.pack(side="left", fill="both", expand=True)
 
-        self.add_console_box(self, height=5).pack(fill="x", padx=10, pady=(0, 8))
+        self.add_console_box(self, height=7).pack(fill="x", padx=10, pady=(0, 8))
         self.status.set("Sẵn sàng. Train CNN hoặc Nạp trọng số để thử nghiệm vẽ chữ số.")
 
     def _ensure_instances(self):
-        if self.model is None:
-            self.model = models.DigitConvolutionalModel()
         if self.dataset is None:
-            self.dataset = backend.DigitClassificationDataset(self.model)
-        else:
+            temp_m = self.model if self.model is not None else models.DigitConvolutionalModel()
+            self.dataset = backend.DigitClassificationDataset2(temp_m)
+        elif self.model is not None:
             self.dataset.model = self.model
 
     def clear_pad(self):
@@ -1628,8 +1726,16 @@ class ConvolutionalModule(BaseLabView):
         self.chart.render([str(i) for i in range(10)], np.zeros(10), None, "Đã xóa nét vẽ")
 
     def infer_cnn(self):
+        if self.app.busy:
+            self.status.set("Đang bận tác vụ huấn luyện. Vui lòng đợi...")
+            return
         if self.model is None:
             self.status.set("Chưa có mô hình CNN: Hãy Train hoặc Nạp trọng số trước.")
+            messagebox.showwarning(
+                "Chưa có mô hình",
+                "Mô hình CNN (Q5) chưa được huấn luyện hoặc chưa nạp trọng số!\n\n"
+                "Vui lòng bấm '▶ Train CNN' hoặc '💾 Nạp Trọng số CNN' trước khi nhận dạng chữ số."
+            )
             return
         try:
             arr_28, _ = self.canvas.get_centered_array()
@@ -1666,6 +1772,17 @@ class ConvolutionalModule(BaseLabView):
             self.status.set(f"Lỗi: {e}")
 
     def load_random_mnist(self):
+        if self.app.busy:
+            self.status.set("Đang bận tác vụ huấn luyện. Vui lòng đợi...")
+            return
+        if self.model is None:
+            self.status.set("Chưa có mô hình CNN: Hãy Train hoặc Nạp trọng số trước.")
+            messagebox.showwarning(
+                "Chưa có mô hình",
+                "Mô hình CNN (Q5) chưa được huấn luyện hoặc chưa nạp trọng số!\n\n"
+                "Vui lòng bấm '▶ Train CNN' hoặc '💾 Nạp Trọng số CNN' trước khi lấy mẫu ngẫu nhiên."
+            )
+            return
         try:
             self._ensure_instances()
             idx = random.randrange(len(self.dataset.test_images))
@@ -1678,40 +1795,60 @@ class ConvolutionalModule(BaseLabView):
             self.status.set(f"Lỗi: {e}")
 
     def train_cnn(self):
-        self.status.set("Đang huấn luyện mạng tích chập CNN (5 epochs)...")
+        try:
+            lr = float(self.var_lr.get())
+            bs = int(self.var_bs.get())
+            max_ep = int(self.var_ep.get())
+        except ValueError:
+            messagebox.showerror("Lỗi", "Vui lòng nhập đúng số cho LR, Batch, Epochs.")
+            return
+
+        self.status.set(f"Đang huấn luyện mạng tích chập CNN ({max_ep} epochs)...")
 
         def task():
             torch.manual_seed(42)
-            self.model = models.DigitConvolutionalModel()
-            self.dataset = backend.DigitClassificationDataset(self.model)
-            self.model.train()
-            loader = DataLoader(self.dataset, batch_size=40, shuffle=True)
-            opt = optim.Adam(self.model.parameters(), lr=0.004)
+            m = models.DigitConvolutionalModel()
+            ds = backend.DigitClassificationDataset2(m)
+            m.train()
+            loader = DataLoader(ds, batch_size=bs, shuffle=True)
+            opt = optim.Adam(m.parameters(), lr=lr)
 
-            for epoch in range(5):
+            print(f"\n--- BẮT ĐẦU HUẤN LUYỆN CNN (LR={lr}, Batch={bs}, Epochs={max_ep}) ---")
+            for epoch in range(1, max_ep + 1):
                 if self.app.is_cancelled():
                     print("-> Đã nhận lệnh dừng huấn luyện CNN.")
                     break
+                ep_losses = []
                 for b in loader:
                     opt.zero_grad()
-                    loss = losses.digitconvolution_Loss(self.model(b['x']), b['label'])
+                    loss = losses.digitconvolution_Loss(m(b['x']), b['label'])
                     loss.backward()
                     opt.step()
-                print(f"Epoch {epoch+1}/5 CNN hoàn thành.")
+                    ep_losses.append(loss.item())
+
+                with torch.no_grad():
+                    val_acc = ds.get_validation_accuracy()
+                avg_l = float(np.mean(ep_losses)) if ep_losses else 0.0
+                print(f"Epoch {epoch:2d}/{max_ep} | Loss trung bình: {avg_l:.4f} | Val Accuracy: {val_acc*100:.2f}%")
 
             if not self.app.is_cancelled():
-                save_model_weights(self.model, "q5_full")
+                save_model_weights(m, "q5")
+                self.model = m
+                self.dataset = ds
 
         self.run_task(
             "Huấn luyện CNN (Q5)",
             task,
-            on_done=lambda: self.status.set("Đã dừng tác vụ." if self.app.is_cancelled() else "Huấn luyện CNN hoàn tất, đã lưu q5_full.pt.")
+            on_done=lambda: self.status.set(
+                "Đã dừng tác vụ." if self.app.is_cancelled()
+                else "Huấn luyện CNN hoàn tất, đã lưu q5.pt."
+            )
         )
 
     def load_checkpoint(self):
         try:
             m = models.DigitConvolutionalModel()
-            p = load_model_weights(m, "q5_full")
+            p = load_model_weights(m, "q5")
             self.model = m
             self._ensure_instances()
             self.status.set(f"Đã nạp trọng số từ {p}. Hãy vẽ chữ số!")

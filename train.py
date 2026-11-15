@@ -109,7 +109,7 @@ def train_digitclassifier(model, dataset):
     dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-    # Vòng lặp huấn luyện, tối đa 1000 lần lặp
+    # Vòng lặp huấn luyện, tối đa 100 lần lặp
     for epoch in range(100):
         for batch in dataloader:
             x = batch['x']
@@ -137,7 +137,7 @@ def train_languageid(model, dataset):
     dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-    for epoch in range(1000):
+    for epoch in range(100):
         for batch in dataloader:
             # Chuyển dữ liệu từ (batch_size, length, num_chars)
             # thành (length, batch_size, num_chars)
