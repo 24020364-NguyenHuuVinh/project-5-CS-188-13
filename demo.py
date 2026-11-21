@@ -9,7 +9,7 @@ Bao gồm 5 bài toán:
               + Bảng vẽ tương tác tự động căn giữa trọng tâm khối lượng (Center of Mass).
 - Bài 4 (Q4): Mạng hồi quy (RNN) nhận diện ngôn ngữ từ chuỗi ký tự.
 - Bài 5 (Q5): Mạng tích chập CNN & trực quan hóa Feature Map từ hàm Convolve 2D (chế độ cơ bản).
-
+- Bài 6 (Q6): 
 Tính năng nổi bật:
 - Bộ theo dõi tác vụ toàn cục (Task Monitor): Cho biết chính xác tác vụ nào đang chạy.
 - Nút "🛑 Dừng tác vụ" (Cancel/Reset): Hủy ngang ngay lập tức tác vụ đang chạy, không sợ bị đơ hay kẹt trạng thái bận.
@@ -1881,7 +1881,7 @@ class ConvolutionalModule(BaseLabView):
             self.status.set(f"Lỗi: {e}")
 
 # ============================================================================
-# 11. BÀI 6: Attention class (Q6)
+# 11. BÀI 6: SCALED DOT-PRODUCT ATTENTION (Q6)
 # ============================================================================
 
 class Attention(Module):
@@ -1890,6 +1890,7 @@ class Attention(Module):
         self.k_layer = Linear(layer_size, layer_size)
         self.q_layer = Linear(layer_size, layer_size)
         self.v_layer = Linear(layer_size, layer_size)
+
         self.register_buffer(
             "mask",
             tril(ones(block_size, block_size)).view(1, 1, block_size, block_size),
@@ -1912,54 +1913,154 @@ class Attention(Module):
 
         return out, attention_weights
 
-if __name__ == "__main__":
-    torch.manual_seed(42)
 
-    layer_size = 4
-    block_size = 20
+class AttentionDemoApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Scaled Dot-Product Attention Demo (Question 6)")
+        self.root.geometry("760x620")
+        self.root.configure(padx=15, pady=15)
 
-    embedding = Embedding(num_embeddings=100, embedding_dim=layer_size)
-    attention_model = Attention(layer_size=layer_size, block_size=block_size)
+        torch.manual_seed(42)
+        self.layer_size = 4
+        self.block_size = 15
+        self.embedding = Embedding(num_embeddings=200, embedding_dim=self.layer_size)
+        self.model = Attention(layer_size=self.layer_size, block_size=self.block_size)
 
-    print("=== DEMO ATTENTION INTERACTIVE (NHẬP TỪ BÀN PHÍM) ===")
-    print("Gõ 'exit' để thoát chương trình.\n")
+        self.setup_ui()
 
-    while True:
-        user_text = input(">> Nhập một câu bất kỳ (vd: toi hoc deep learning): ").strip()
+    def setup_ui(self):
+        title_lbl = tk.Label(
+            self.root,
+            text="DEMO SCALED DOT-PRODUCT ATTENTION",
+            font=("Segoe UI", 14, "bold"),
+            fg="#1a5276"
+        )
+        title_lbl.pack(pady=(0, 10))
 
-        if user_text.lower() == 'exit':
-            print("Đã thoát chương trình.")
-            break
+        input_frame = tk.LabelFrame(
+            self.root,
+            text=" Dữ liệu đầu vào (Input) ",
+            font=("Segoe UI", 10, "bold"),
+            padx=10,
+            pady=10
+        )
+        input_frame.pack(fill="x", pady=(0, 10))
+
+        tk.Label(input_frame, text="Nhập chuỗi văn bản (tối đa 15 từ):", font=("Segoe UI", 10)).pack(anchor="w")
+
+        entry_row = tk.Frame(input_frame)
+        entry_row.pack(fill="x", pady=(5, 0))
+
+        self.text_entry = tk.Entry(entry_row, font=("Segoe UI", 11))
+        self.text_entry.insert(0, "toi la sinh vien")
+        self.text_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.text_entry.bind("<Return>", lambda event: self.run_attention())
+
+        run_btn = tk.Button(
+            entry_row,
+            text="Chạy Attention",
+            font=("Segoe UI", 10, "bold"),
+            bg="#2874a6",
+            fg="white",
+            padx=15,
+            pady=4,
+            command=self.run_attention
+        )
+        run_btn.pack(side="right")
+
+        info_frame = tk.LabelFrame(
+            self.root,
+            text=" Thông số Tensor ",
+            font=("Segoe UI", 10, "bold"),
+            padx=10,
+            pady=8
+        )
+        info_frame.pack(fill="x", pady=(0, 10))
+
+        self.shape_lbl = tk.Label(
+            info_frame,
+            text="Input Shape: -   |   Output Shape: -   |   Số tokens (T): -",
+            font=("Consolas", 10)
+        )
+        self.shape_lbl.pack(anchor="w")
+
+        matrix_frame = tk.LabelFrame(
+            self.root,
+            text=" Ma trận trọng số Attention (Sau Causal Mask & Softmax) ",
+            font=("Segoe UI", 10, "bold"),
+            padx=10,
+            pady=10
+        )
+        matrix_frame.pack(fill="both", expand=True, pady=(0, 10))
+
+        self.matrix_text = tk.Text(matrix_frame, height=10, font=("Consolas", 10), bg="#f8f9f9", state="disabled")
+        self.matrix_text.pack(fill="both", expand=True)
+
+        out_frame = tk.LabelFrame(
+            self.root,
+            text=" Kết quả đầu ra (Output Tensor) ",
+            font=("Segoe UI", 10, "bold"),
+            padx=10,
+            pady=10
+        )
+        out_frame.pack(fill="both", expand=True)
+
+        self.output_text = tk.Text(out_frame, height=8, font=("Consolas", 10), bg="#f8f9f9", state="disabled")
+        self.output_text.pack(fill="both", expand=True)
+
+        self.run_attention()
+
+    def run_attention(self):
+        user_text = self.text_entry.get().strip()
         if not user_text:
-            continue
+            messagebox.showwarning("Cảnh báo", "Vui lòng nhập ít nhất 1 từ!")
+            return
 
         tokens = user_text.split()
-        if len(tokens) > block_size:
-            print(f"Lỗi: Câu quá dài! Vui lòng nhập tối đa {block_size} từ.\n")
-            continue
+        if len(tokens) > self.block_size:
+            messagebox.showerror("Lỗi độ dài", f"Chuỗi quá dài! Vui lòng nhập tối đa {self.block_size} từ.")
+            return
 
         vocab = {word: idx for idx, word in enumerate(set(tokens))}
         token_ids = torch.tensor([[vocab[word] for word in tokens]])
-        input_tensor = embedding(token_ids)
+        input_tensor = self.embedding(token_ids)
 
-        output_tensor, weights = attention_model(input_tensor)
+        output_tensor, weights = self.model(input_tensor)
 
-        print("\n--- KẾT QUẢ XỬ LÝ ---")
-        print(f"Các tokens đầu vào ({len(tokens)} từ): {tokens}")
-        print(f"Input Tensor Shape : {input_tensor.shape}")
-        print(f"Output Tensor Shape: {output_tensor.shape}")
+        self.shape_lbl.config(
+            text=f"Input Shape: {list(input_tensor.shape)}   |   Output Shape: {list(output_tensor.shape)}   |   Số tokens (T): {len(tokens)}"
+        )
 
-        print("\nMa trận trọng số Attention (Hàng = từ đang xét, Cột = mức độ chú ý tới các từ trước đó):")
-        header = "          " + "".join([f"{w:>10}" for w in tokens])
-        print(header)
         weights_rounded = torch.round(weights.squeeze(0), decimals=3).detach().tolist()
+        header = f"{'Token':<12}" + "".join([f"{w:>10}" for w in tokens]) + "\n"
+        separator = "-" * len(header) + "\n"
+        rows = ""
         for i, word in enumerate(tokens):
-            row_str = "".join([f"{val:10.3f}" for val in weights_rounded[i]])
-            print(f"{word:>10}{row_str}")
+            row_vals = "".join([f"{val:10.3f}" for val in weights_rounded[i]])
+            rows += f"{word:<12}{row_vals}\n"
 
-        print("\nOutput Tensor (Vector biểu diễn mới sau Attention):")
-        print(torch.round(output_tensor, decimals=3).detach())
-        print("-" * 55 + "\n")
+        self.update_textbox(self.matrix_text, header + separator + rows)
+
+        out_rounded = torch.round(output_tensor.squeeze(0), decimals=4).detach().tolist()
+        out_str = ""
+        for i, word in enumerate(tokens):
+            vec_str = ", ".join([f"{v:7.4f}" for v in out_rounded[i]])
+            out_str += f"{word:<12} ->  [{vec_str}]\n"
+
+        self.update_textbox(self.output_text, out_str)
+
+    def update_textbox(self, widget, content):
+        widget.config(state="normal")
+        widget.delete("1.0", tk.END)
+        widget.insert(tk.END, content)
+        widget.config(state="disabled")
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = AttentionDemoApp(root)
+    root.mainloop()
 
 # ============================================================================
 # 13. CỬA SỔ CHÍNH: HỆ THỐNG QUẢN LÝ BẬN & DỪNG TÁC VỤ AN TOÀN
