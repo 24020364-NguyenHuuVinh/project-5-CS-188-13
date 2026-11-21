@@ -36,6 +36,9 @@ import numpy as np
 import torch
 from torch import optim, no_grad
 from torch.utils.data import DataLoader
+from torch.nn import Module, Linear, Embedding
+from torch import matmul, movedim, tril, ones
+from torch.nn.functional import softmax
 
 try:
     from PIL import Image, ImageDraw, ImageTk
