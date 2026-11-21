@@ -1880,9 +1880,89 @@ class ConvolutionalModule(BaseLabView):
             self.print_log(traceback.format_exc())
             self.status.set(f"Lỗi: {e}")
 
+# ============================================================================
+# 11. BÀI 6: Attention class (Q6)
+# ============================================================================
+
+class Attention(Module):
+    def __init__(self, layer_size, block_size):
+        super().__init__()
+        self.k_layer = Linear(layer_size, layer_size)
+        self.q_layer = Linear(layer_size, layer_size)
+        self.v_layer = Linear(layer_size, layer_size)
+        self.register_buffer(
+            "mask",
+            tril(ones(block_size, block_size)).view(1, 1, block_size, block_size),
+        )
+        self.layer_size = layer_size
+
+    def forward(self, input):
+        B, T, C = input.size()
+
+        K = self.k_layer(input)
+        Q = self.q_layer(input)
+        V = self.v_layer(input)
+
+        K_T = movedim(K, 1, 2)
+        M = matmul(Q, K_T) / (self.layer_size ** 0.5)
+        M = M.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))[0]
+
+        attention_weights = softmax(M, dim=-1)
+        out = matmul(attention_weights, V)
+
+        return out, attention_weights
+
+if __name__ == "__main__":
+    torch.manual_seed(42)
+
+    layer_size = 4
+    block_size = 20
+
+    embedding = Embedding(num_embeddings=100, embedding_dim=layer_size)
+    attention_model = Attention(layer_size=layer_size, block_size=block_size)
+
+    print("=== DEMO ATTENTION INTERACTIVE (NHẬP TỪ BÀN PHÍM) ===")
+    print("Gõ 'exit' để thoát chương trình.\n")
+
+    while True:
+        user_text = input(">> Nhập một câu bất kỳ (vd: toi hoc deep learning): ").strip()
+
+        if user_text.lower() == 'exit':
+            print("Đã thoát chương trình.")
+            break
+        if not user_text:
+            continue
+
+        tokens = user_text.split()
+        if len(tokens) > block_size:
+            print(f"Lỗi: Câu quá dài! Vui lòng nhập tối đa {block_size} từ.\n")
+            continue
+
+        vocab = {word: idx for idx, word in enumerate(set(tokens))}
+        token_ids = torch.tensor([[vocab[word] for word in tokens]])
+        input_tensor = embedding(token_ids)
+
+        output_tensor, weights = attention_model(input_tensor)
+
+        print("\n--- KẾT QUẢ XỬ LÝ ---")
+        print(f"Các tokens đầu vào ({len(tokens)} từ): {tokens}")
+        print(f"Input Tensor Shape : {input_tensor.shape}")
+        print(f"Output Tensor Shape: {output_tensor.shape}")
+
+        print("\nMa trận trọng số Attention (Hàng = từ đang xét, Cột = mức độ chú ý tới các từ trước đó):")
+        header = "          " + "".join([f"{w:>10}" for w in tokens])
+        print(header)
+        weights_rounded = torch.round(weights.squeeze(0), decimals=3).detach().tolist()
+        for i, word in enumerate(tokens):
+            row_str = "".join([f"{val:10.3f}" for val in weights_rounded[i]])
+            print(f"{word:>10}{row_str}")
+
+        print("\nOutput Tensor (Vector biểu diễn mới sau Attention):")
+        print(torch.round(output_tensor, decimals=3).detach())
+        print("-" * 55 + "\n")
 
 # ============================================================================
-# 11. CỬA SỔ CHÍNH: HỆ THỐNG QUẢN LÝ BẬN & DỪNG TÁC VỤ AN TOÀN
+# 13. CỬA SỔ CHÍNH: HỆ THỐNG QUẢN LÝ BẬN & DỪNG TÁC VỤ AN TOÀN
 # ============================================================================
 class CS188ProjectApp(tk.Tk):
     TABS = [
