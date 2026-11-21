@@ -9,7 +9,7 @@ Bao gồm 5 bài toán:
               + Bảng vẽ tương tác tự động căn giữa trọng tâm khối lượng (Center of Mass).
 - Bài 4 (Q4): Mạng hồi quy (RNN) nhận diện ngôn ngữ từ chuỗi ký tự.
 - Bài 5 (Q5): Mạng tích chập CNN & trực quan hóa Feature Map từ hàm Convolve 2D (chế độ cơ bản).
-- Bài 6 (Q6): 
+- Bài 6 (Q6): Scaled Dot-Product Attention
 Tính năng nổi bật:
 - Bộ theo dõi tác vụ toàn cục (Task Monitor): Cho biết chính xác tác vụ nào đang chạy.
 - Nút "🛑 Dừng tác vụ" (Cancel/Reset): Hủy ngang ngay lập tức tác vụ đang chạy, không sợ bị đơ hay kẹt trạng thái bận.
