@@ -1351,10 +1351,6 @@ class LanguageIDModule(BaseLabView):
                                       bg="#ffffff", fg="#047857")
         self.lbl_val_badge.pack(side="left", padx=8)
 
-        lbl_st = tk.Label(bar, textvariable=self.status, font=("Segoe UI", 9, "italic"),
-                          bg="#ffffff", fg="#475569")
-        lbl_st.pack(side="left", padx=10)
-
         self.lock_list = [btn_fit, btn_load, btn_eval]
 
         # 2. Thân giao diện chia 2 cột (Trái: Thử nghiệm từ mẫu, Phải: Biểu đồ xác suất)
@@ -1378,12 +1374,15 @@ class LanguageIDModule(BaseLabView):
         row_in.pack(fill="x", pady=(2, 6))
 
         self.var_word = tk.StringVar(value="algorithm")
+        word_wrap = tk.Frame(row_in, bg="#f8fafc", bd=1, relief=tk.SOLID)
+        word_wrap.pack(side="left", fill="x", expand=True, padx=(0, 4))
+
         self.ent_word = tk.Entry(
-            row_in, textvariable=self.var_word,
+            word_wrap, textvariable=self.var_word,
             font=("Segoe UI", 11), bg="#f8fafc", fg="#0f172a",
-            bd=1, relief=tk.SOLID
+            bd=0, relief=tk.FLAT
         )
-        self.ent_word.pack(side="left", fill="x", expand=True, padx=(0, 4), ipady=3)
+        self.ent_word.pack(fill="both", expand=True, padx=6, pady=3)
         self.ent_word.bind("<Return>", lambda _e: self.predict_word())
 
         btn_clear = tk.Button(
@@ -1917,12 +1916,9 @@ class Attention(Module):
         return out, attention_weights
 
 
-class AttentionDemoApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Scaled Dot-Product Attention Demo (Question 6)")
-        self.root.geometry("760x620")
-        self.root.configure(padx=15, pady=15)
+class AttentionModule(BaseLabView):
+    def __init__(self, master, app):
+        super().__init__(master, app)
 
         torch.manual_seed(42)
         self.layer_size = 4
@@ -1931,87 +1927,146 @@ class AttentionDemoApp:
         self.model = Attention(layer_size=self.layer_size, block_size=self.block_size)
 
         self.setup_ui()
+        self.run_attention()
 
     def setup_ui(self):
-        title_lbl = tk.Label(
-            self.root,
-            text="DEMO SCALED DOT-PRODUCT ATTENTION",
-            font=("Segoe UI", 14, "bold"),
-            fg="#1a5276"
+        # ---------------- THANH ĐIỀU KHIỂN & NHẬP LIỆU ----------------
+        bar = tk.Frame(self, bg="#ffffff", bd=1, relief=tk.SOLID, padx=10, pady=8)
+        bar.pack(fill="x", padx=10, pady=(10, 6))
+
+        tk.Label(
+            bar, text="Chuỗi văn bản (T ≤ 15 từ):",
+            font=("Segoe UI", 9, "bold"), fg="#1e293b", bg="#ffffff"
+        ).pack(side="left", padx=(0, 6))
+
+        # Bọc Entry trong Frame để tránh lỗi Tkinter bị rách viền (border clipping) khi gõ tiếng Việt / ký tự có dấu
+        entry_wrap = tk.Frame(bar, bg="#f8fafc", bd=1, relief=tk.SOLID)
+        entry_wrap.pack(side="left", padx=(0, 6))
+
+        self.text_entry = tk.Entry(
+            entry_wrap, font=("Segoe UI", 10), width=34,
+            bg="#f8fafc", fg="#0f172a", bd=0, relief=tk.FLAT
         )
-        title_lbl.pack(pady=(0, 10))
-
-        input_frame = tk.LabelFrame(
-            self.root,
-            text=" Dữ liệu đầu vào (Input) ",
-            font=("Segoe UI", 10, "bold"),
-            padx=10,
-            pady=10
-        )
-        input_frame.pack(fill="x", pady=(0, 10))
-
-        tk.Label(input_frame, text="Nhập chuỗi văn bản (tối đa 15 từ):", font=("Segoe UI", 10)).pack(anchor="w")
-
-        entry_row = tk.Frame(input_frame)
-        entry_row.pack(fill="x", pady=(5, 0))
-
-        self.text_entry = tk.Entry(entry_row, font=("Segoe UI", 11))
         self.text_entry.insert(0, "toi la sinh vien")
-        self.text_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        self.text_entry.bind("<Return>", lambda event: self.run_attention())
+        self.text_entry.pack(fill="both", expand=True, padx=6, pady=3)
+        self.text_entry.bind("<Return>", lambda _e: self.run_attention())
 
-        run_btn = tk.Button(
-            entry_row,
-            text="Chạy Attention",
-            font=("Segoe UI", 10, "bold"),
-            bg="#2874a6",
-            fg="white",
-            padx=15,
-            pady=4,
+        btn_run = tk.Button(
+            bar, text="⚡ Chạy Attention",
+            bg="#2563eb", fg="#ffffff", font=("Segoe UI", 9, "bold"),
+            bd=0, padx=12, pady=4, cursor="hand2",
             command=self.run_attention
         )
-        run_btn.pack(side="right")
+        btn_run.pack(side="left", padx=4)
 
-        info_frame = tk.LabelFrame(
-            self.root,
-            text=" Thông số Tensor ",
-            font=("Segoe UI", 10, "bold"),
-            padx=10,
-            pady=8
-        )
-        info_frame.pack(fill="x", pady=(0, 10))
+        # Mẫu câu thử nghiệm nhanh
+        tk.Label(
+            bar, text="Mẫu:",
+            font=("Segoe UI", 8, "bold"), fg="#64748b", bg="#ffffff"
+        ).pack(side="left", padx=(10, 4))
+
+        samples = [
+            ("toi la sinh vien", "toi la sinh vien"),
+            ("tri tue nhan tao", "tri tue nhan tao"),
+            ("attention is all you need", "attention is all you need"),
+            ("deep learning", "deep learning"),
+        ]
+        sample_btns = []
+        for lbl, val in samples:
+            btn_sample = tk.Button(
+                bar, text=lbl, bg="#f1f5f9", fg="#334155",
+                font=("Segoe UI", 8), bd=1, relief=tk.SOLID, padx=6, pady=2,
+                cursor="hand2", command=lambda v=val: self.load_sample(v)
+            )
+            btn_sample.pack(side="left", padx=2)
+            sample_btns.append(btn_sample)
+
+        self.lock_list = [btn_run] + sample_btns
+
+        # ---------------- THÔNG TIN HÌNH DẠNG TENSOR ----------------
+        info_frame = tk.Frame(self, bg="#e0f2fe", bd=1, relief=tk.SOLID, padx=10, pady=6)
+        info_frame.pack(fill="x", padx=10, pady=(0, 6))
 
         self.shape_lbl = tk.Label(
             info_frame,
-            text="Input Shape: -   |   Output Shape: -   |   Số tokens (T): -",
-            font=("Consolas", 10)
+            text="Input Shape: -   |   Output Shape: -   |   Số tokens (T): -   |   Embedding Dim (C): 4",
+            font=("Consolas", 9, "bold"), bg="#e0f2fe", fg="#0369a1"
         )
         self.shape_lbl.pack(anchor="w")
 
-        matrix_frame = tk.LabelFrame(
-            self.root,
-            text=" Ma trận trọng số Attention (Sau Causal Mask & Softmax) ",
-            font=("Segoe UI", 10, "bold"),
-            padx=10,
-            pady=10
+        # ---------------- KHUNG NỘI DUNG CHÍNH (2 CỘT) ----------------
+        content = tk.Frame(self, bg="#f8fafc")
+        content.pack(fill="both", expand=True, padx=10, pady=(0, 6))
+
+        # Cột trái: Ma trận trọng số Attention
+        left_box = tk.LabelFrame(
+            content,
+            text=" 🔍 Ma trận Trọng số Chú ý (Causal Attention Weights - T × T) ",
+            font=("Segoe UI", 9, "bold"), fg="#1e293b", bg="#ffffff",
+            bd=1, relief=tk.SOLID, padx=8, pady=6
         )
-        matrix_frame.pack(fill="both", expand=True, pady=(0, 10))
+        left_box.pack(side="left", fill="both", expand=True, padx=(0, 4))
 
-        self.matrix_text = tk.Text(matrix_frame, height=10, font=("Consolas", 10), bg="#f8f9f9", state="disabled")
-        self.matrix_text.pack(fill="both", expand=True)
+        tk.Label(
+            left_box,
+            text="* Trọng số sau khi nhân Q · K^T / √d, áp Causal Mask (-inf ở nửa trên) và Softmax theo hàng.",
+            font=("Segoe UI", 8, "italic"), fg="#64748b", bg="#ffffff"
+        ).pack(anchor="w", pady=(0, 4))
 
-        out_frame = tk.LabelFrame(
-            self.root,
-            text=" Kết quả đầu ra (Output Tensor) ",
-            font=("Segoe UI", 10, "bold"),
-            padx=10,
-            pady=10
+        frame_mat_txt = tk.Frame(left_box, bg="#ffffff")
+        frame_mat_txt.pack(fill="both", expand=True)
+
+        self.matrix_text = tk.Text(
+            frame_mat_txt, font=("Consolas", 9),
+            bg="#f8fafc", fg="#0f172a", bd=1, relief=tk.SOLID,
+            wrap="none"
         )
-        out_frame.pack(fill="both", expand=True)
+        sb_mat_y = ttk.Scrollbar(frame_mat_txt, orient="vertical", command=self.matrix_text.yview)
+        sb_mat_x = ttk.Scrollbar(frame_mat_txt, orient="horizontal", command=self.matrix_text.xview)
+        self.matrix_text.configure(xscrollcommand=sb_mat_x.set, yscrollcommand=sb_mat_y.set)
 
-        self.output_text = tk.Text(out_frame, height=8, font=("Consolas", 10), bg="#f8f9f9", state="disabled")
-        self.output_text.pack(fill="both", expand=True)
+        sb_mat_y.pack(side="right", fill="y")
+        sb_mat_x.pack(side="bottom", fill="x")
+        self.matrix_text.pack(side="left", fill="both", expand=True)
 
+        # Cột phải: Tensor đầu ra
+        right_box = tk.LabelFrame(
+            content,
+            text=" 📊 Tensor Đầu ra (Output Tensor: Attention Weights × V - T × 4) ",
+            font=("Segoe UI", 9, "bold"), fg="#1e293b", bg="#ffffff",
+            bd=1, relief=tk.SOLID, padx=8, pady=6
+        )
+        right_box.pack(side="left", fill="both", expand=True, padx=(4, 0))
+
+        tk.Label(
+            right_box,
+            text="* Mỗi token nhận biểu diễn mới tổng hợp ngữ cảnh từ các token đi trước qua tích ma trận với V.",
+            font=("Segoe UI", 8, "italic"), fg="#64748b", bg="#ffffff"
+        ).pack(anchor="w", pady=(0, 4))
+
+        frame_out_txt = tk.Frame(right_box, bg="#ffffff")
+        frame_out_txt.pack(fill="both", expand=True)
+
+        self.output_text = tk.Text(
+            frame_out_txt, font=("Consolas", 9),
+            bg="#f8fafc", fg="#0f172a", bd=1, relief=tk.SOLID,
+            wrap="none"
+        )
+        sb_out_y = ttk.Scrollbar(frame_out_txt, orient="vertical", command=self.output_text.yview)
+        sb_out_x = ttk.Scrollbar(frame_out_txt, orient="horizontal", command=self.output_text.xview)
+        self.output_text.configure(xscrollcommand=sb_out_x.set, yscrollcommand=sb_out_y.set)
+
+        sb_out_y.pack(side="right", fill="y")
+        sb_out_x.pack(side="bottom", fill="x")
+        self.output_text.pack(side="left", fill="both", expand=True)
+
+        # ---------------- KHUNG NHẬT KÝ ----------------
+        self.add_console_box(self, height=6).pack(fill="x", padx=10, pady=(0, 8))
+        self.status.set("Sẵn sàng.")
+
+    def load_sample(self, text):
+        self.text_entry.delete(0, tk.END)
+        self.text_entry.insert(0, text)
         self.run_attention()
 
     def run_attention(self):
@@ -2022,51 +2077,62 @@ class AttentionDemoApp:
 
         tokens = user_text.split()
         if len(tokens) > self.block_size:
-            messagebox.showerror("Lỗi độ dài", f"Chuỗi quá dài! Vui lòng nhập tối đa {self.block_size} từ.")
+            messagebox.showerror(
+                "Lỗi độ dài",
+                f"Chuỗi quá dài ({len(tokens)} từ)! Vui lòng nhập tối đa {self.block_size} từ."
+            )
             return
 
-        vocab = {word: idx for idx, word in enumerate(set(tokens))}
-        token_ids = torch.tensor([[vocab[word] for word in tokens]])
-        input_tensor = self.embedding(token_ids)
+        try:
+            unique_words = list(dict.fromkeys(tokens))
+            vocab = {word: idx for idx, word in enumerate(unique_words)}
+            token_ids = torch.tensor([[vocab[word] for word in tokens]])
+            input_tensor = self.embedding(token_ids)
 
-        output_tensor, weights = self.model(input_tensor)
+            output_tensor, weights = self.model(input_tensor)
 
-        self.shape_lbl.config(
-            text=f"Input Shape: {list(input_tensor.shape)}   |   Output Shape: {list(output_tensor.shape)}   |   Số tokens (T): {len(tokens)}"
-        )
+            self.shape_lbl.config(
+                text=f"Input Shape: {list(input_tensor.shape)}   |   "
+                     f"Output Shape: {list(output_tensor.shape)}   |   "
+                     f"Số tokens (T): {len(tokens)}"
+            )
 
-        weights_rounded = torch.round(weights.squeeze(0), decimals=3).detach().tolist()
-        header = f"{'Token':<12}" + "".join([f"{w:>10}" for w in tokens]) + "\n"
-        separator = "-" * len(header) + "\n"
-        rows = ""
-        for i, word in enumerate(tokens):
-            row_vals = "".join([f"{val:10.3f}" for val in weights_rounded[i]])
-            rows += f"{word:<12}{row_vals}\n"
+            weights_rounded = torch.round(weights.squeeze(0), decimals=3).detach().tolist()
+            header = f"{'Token':<12}" + "".join([f"{w:>10}" for w in tokens]) + "\n"
+            separator = "-" * len(header) + "\n"
+            rows = ""
+            for i, word in enumerate(tokens):
+                row_vals = "".join([f"{val:10.3f}" for val in weights_rounded[i]])
+                rows += f"{word:<12}{row_vals}\n"
 
-        self.update_textbox(self.matrix_text, header + separator + rows)
+            self._update_textbox(self.matrix_text, header + separator + rows)
 
-        out_rounded = torch.round(output_tensor.squeeze(0), decimals=4).detach().tolist()
-        out_str = ""
-        for i, word in enumerate(tokens):
-            vec_str = ", ".join([f"{v:7.4f}" for v in out_rounded[i]])
-            out_str += f"{word:<12} ->  [{vec_str}]\n"
+            out_rounded = torch.round(output_tensor.squeeze(0), decimals=4).detach().tolist()
+            out_str = ""
+            for i, word in enumerate(tokens):
+                vec_str = ", ".join([f"{v:7.4f}" for v in out_rounded[i]])
+                out_str += f"{word:<12} ->  [{vec_str}]\n"
 
-        self.update_textbox(self.output_text, out_str)
+            self._update_textbox(self.output_text, out_str)
 
-    def update_textbox(self, widget, content):
+            self.print_log(
+                f"[Q6 Attention] Xử lý chuỗi '{user_text}' -> T={len(tokens)} tokens.\n"
+                f"  - Input shape: {list(input_tensor.shape)}, Output shape: {list(output_tensor.shape)}\n"
+                f"  - Causal Mask: Nửa trên của ma trận bị gán -inf nên xác suất Softmax bằng 0.000.\n"
+                f"  - Mỗi vị trí token chỉ chú ý đến chính nó và các token đứng trước nó."
+            )
+        except Exception as e:
+            self.print_log(traceback.format_exc())
+
+    def _update_textbox(self, widget, content):
         widget.config(state="normal")
         widget.delete("1.0", tk.END)
         widget.insert(tk.END, content)
         widget.config(state="disabled")
 
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = AttentionDemoApp(root)
-    root.mainloop()
-
 # ============================================================================
-# 13. CỬA SỔ CHÍNH: HỆ THỐNG QUẢN LÝ BẬN & DỪNG TÁC VỤ AN TOÀN
+# 12. CỬA SỔ CHÍNH: HỆ THỐNG QUẢN LÝ BẬN & DỪNG TÁC VỤ AN TOÀN
 # ============================================================================
 class CS188ProjectApp(tk.Tk):
     TABS = [
@@ -2075,6 +2141,7 @@ class CS188ProjectApp(tk.Tk):
         ("q3", "3. Chữ số MNIST & Benchmark (Q3)", DigitClassificationModule),
         ("q4", "4. Nhận diện Ngôn ngữ (Q4 - RNN)", LanguageIDModule),
         ("q5", "5. Mạng Tích chập CNN (Q5)", ConvolutionalModule),
+        ("q6", "6. Attention(Q6)", AttentionModule),
     ]
 
     def __init__(self):
