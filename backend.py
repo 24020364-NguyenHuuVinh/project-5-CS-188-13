@@ -115,8 +115,11 @@ class PerceptronDataset(Custom_Dataset):
 
         x = self.x[idx]
         y = self.y[idx]
-
+   
         
+          
+
+          
 
         if use_graphics and time.time() - self.last_update > 0.01:
             w = self.model.get_weights().data.flatten()
